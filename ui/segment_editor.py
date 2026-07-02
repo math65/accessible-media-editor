@@ -28,11 +28,13 @@ import json
 import logging
 import os
 import threading
+import uuid
 
 import wx
 
+from core import announce
 from core import segments as segmods
-from core.app_info import APP_VERSION
+from core.app_info import APP_NAME, APP_VERSION
 from core.audio_player import AudioPlayer
 from core.ffmpeg_helpers import get_ffmpeg_path
 from core.i18n import get_current_language_code
@@ -46,6 +48,8 @@ from core.updater import (
     launch_installer_after_exit,
     save_updater_state,
 )
+from ui.announcement_dialog import AnnouncementDialog
+from ui.support_dialog import SupportContactDialog
 from ui.update_dialog import UpdateDialog
 
 # Pas de déplacement proposés (libellé, millisecondes).
@@ -147,9 +151,9 @@ class SegmentEditorFrame(wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.on_close)
         self.CentreOnParent()
         self.Show()
-        # Vérification silencieuse des mises à jour peu après l'ouverture (différée
-        # pour ne pas retarder l'affichage ; ne fait rien si l'option est désactivée).
-        wx.CallAfter(self.schedule_startup_update_check)
+        # Au démarrage : vérif annonce serveur (silencieuse) puis, enchaînée, vérif
+        # des mises à jour — jamais deux modales empilées. Différé après l'affichage.
+        wx.CallAfter(self.check_announcement_at_startup)
         wx.CallAfter(self.list_ctrl.SetFocus)
 
     # ------------------------------------------------------------------ menus
@@ -256,6 +260,7 @@ class SegmentEditorFrame(wx.Frame):
         m_help = wx.Menu()
         self._append(m_help, _("Keyboard shortcuts") + "\tF1", lambda e: self._show_shortcuts())
         self._append(m_help, _("Check for &Updates..."), self.on_check_updates)
+        self._append(m_help, _("&Contact support..."), self.on_contact_support)
         bar.Append(m_help, _("&Help"))
 
         self.SetMenuBar(bar)
@@ -756,6 +761,70 @@ class SegmentEditorFrame(wx.Frame):
             self.SetStatusText(text)
         except Exception:  # noqa: BLE001
             pass
+
+    # ------------------------------------------------------ annonces / support
+    def check_announcement_at_startup(self):
+        """Vérification silencieuse d'une annonce serveur, puis (dans tous les cas)
+        enchaînement sur la vérif des mises à jour."""
+        install_id = self._settings.get("install_id", "")
+        if not install_id:
+            install_id = uuid.uuid4().hex
+            self._settings["install_id"] = install_id
+            self._persist()
+        announce.check_announcement(
+            install_id,
+            on_done=lambda ann: wx.CallAfter(self._on_announcement_received, ann),
+        )
+
+    def _on_announcement_received(self, ann):
+        # La vérif MAJ est enchaînée dans le finally : jamais deux modales empilées
+        # au démarrage (annonce d'abord, UpdateDialog ensuite).
+        try:
+            if not ann or self._closed:
+                return
+            title = ann.get("title") or _(APP_NAME)
+            body = ann.get("body") or ""
+            ann_id = ann.get("id") or ""
+            mode = ann.get("mode") or "every"
+
+            seen = self._settings.get("seen_announcements", [])
+            if mode == "once" and ann_id in seen:
+                return
+
+            link = ann.get("link") or {}
+            link_url = link.get("url") or ""
+            install_id = self._settings.get("install_id", "")
+            if link_url:
+                dlg = AnnouncementDialog(
+                    self, title=title, body=body,
+                    link_label=link.get("label") or "",
+                    link_url=link_url,
+                    on_link=(lambda: announce.click_announcement(install_id, ann_id)) if ann_id else None,
+                )
+                try:
+                    dlg.ShowModal()
+                finally:
+                    dlg.Destroy()
+            else:
+                icon = wx.ICON_WARNING if ann.get("style") == "warning" else wx.ICON_INFORMATION
+                wx.MessageBox(body, title, wx.OK | icon, self)
+
+            if mode == "once" and ann_id:
+                seen = self._settings.setdefault("seen_announcements", [])
+                if ann_id not in seen:
+                    seen.append(ann_id)
+                    self._persist()
+            if ann_id:
+                announce.ack_announcement(install_id, ann_id)
+        finally:
+            self.schedule_startup_update_check()
+
+    def on_contact_support(self, event):
+        dlg = SupportContactDialog(self)
+        try:
+            dlg.ShowModal()
+        finally:
+            dlg.Destroy()
 
     # ------------------------------------------------------------ mises à jour
     def schedule_startup_update_check(self):
