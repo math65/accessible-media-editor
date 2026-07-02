@@ -8,6 +8,7 @@ l'export (choix format/qualité, un fichier reconcaténé ou fichiers séparés)
 barre de progression modale.
 """
 
+import json
 import os
 import threading
 
@@ -105,6 +106,7 @@ class EditorHost:
         """Menu « Ouvrir un fichier… » (et sélection initiale au démarrage)."""
         wildcard = (
             _("Media files") + f" ({_MEDIA_WILDCARD})|{_MEDIA_WILDCARD}|"
+            + _("Cut project (*.amccut)") + "|*.amccut|"
             + _("All files") + " (*.*)|*.*"
         )
         with wx.FileDialog(self.editor, _("Open a media file"), wildcard=wildcard,
@@ -115,7 +117,10 @@ class EditorHost:
         return self.load_path(path)
 
     def load_path(self, path):
-        """Analyse le fichier et (re)crée l'éditeur dessus. Retourne True si ouvert."""
+        """Analyse le fichier et (re)crée l'éditeur dessus. Retourne True si ouvert.
+        Un fichier projet ``.amccut`` ouvre directement le média qu'il référence."""
+        if os.path.splitext(path)[1].lower() == '.amccut':
+            return self.load_project(path)
         meta = self.prober.analyze(path)
         if getattr(meta, 'is_image', False) or getattr(meta, 'cue_sheet', None) is not None:
             wx.MessageBox(_("This kind of file cannot be edited here."),
@@ -139,6 +144,29 @@ class EditorHost:
             on_open_file=self.open_file,
             on_persist=self._save_config,
         )
+        return True
+
+    def load_project(self, project_path):
+        """Ouvre un projet ``.amccut`` directement : lit le média qu'il référence,
+        l'ouvre dans l'éditeur, puis applique le plan de découpe. Évite d'avoir à
+        ouvrir le média à la main avant de charger le projet."""
+        try:
+            with open(project_path, encoding='utf-8') as handle:
+                data = json.load(handle)
+        except (OSError, ValueError) as exc:
+            wx.MessageBox(_("Could not open the project.") + f"\n{exc}",
+                          _("Cannot open"), wx.ICON_WARNING)
+            return False
+        source = str(data.get('source', '') or '')
+        if not source or not os.path.isfile(source):
+            wx.MessageBox(
+                _("The media file for this project was not found:\n{name}").format(
+                    name=data.get('source_name') or source or _("(unknown)")),
+                _("Cannot open"), wx.ICON_WARNING)
+            return False
+        if not self.load_path(source):
+            return False
+        self.editor.apply_project_plan(data.get('plan', {}))
         return True
 
     # --------------------------------------------------- format/quality dialog

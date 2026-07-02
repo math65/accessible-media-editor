@@ -127,6 +127,7 @@ class SegmentEditorFrame(wx.Frame):
         self._opt_announce_position = bool(self._settings.get('cutter_announce_position', True))
         self._play_anchor_ms = 0      # point de départ de la lecture (Stop y revient)
         self._last_playhead_ms = 0    # dernière tête de lecture connue (Pause s'y pose)
+        self._is_playing_back = False  # VRAIE lecture en cours (≠ aperçu scrub, qui joue aussi)
         self._preview_audio_index = None  # piste audio écoutée à l'aperçu (None = défaut)
         self._undo_stack = []
         self._redo_stack = []
@@ -375,24 +376,25 @@ class SegmentEditorFrame(wx.Frame):
     def _seek_to(self, pos_ms, speak_it=True):
         self.position_ms = max(0, min(int(pos_ms), self.duration_ms))
         self._sync_position_label()
-        if self._scrub_enabled:
-            # Scrub façon REAPER : chaque pas joue un court aperçu (l'audio EST le
-            # retour ; pas d'annonce vocale par-dessus).
-            self.player.scrub(self.meta.full_path, self.position_ms,
-                              audio_index=self._preview_audio_index)
-        elif self.player.is_playing():
-            # Se déplacer PENDANT la lecture : on continue à jouer depuis la nouvelle
-            # position (pas d'arrêt), en respectant le mode (montage ou tout). Le
-            # curseur/point de reprise suit le déplacement.
+        if self._is_playing_back:
+            # Se déplacer PENDANT la vraie lecture : on continue à jouer depuis la
+            # nouvelle position (pas d'arrêt), en respectant le mode (montage ou tout).
+            # Prioritaire sur le scrub — sinon l'aperçu couperait la lecture continue.
             self._start_playback(self.position_ms)
             if speak_it:
                 self._announce_position()
+        elif self._scrub_enabled:
+            # À l'arrêt : scrub façon REAPER, chaque pas joue un court aperçu (l'audio
+            # EST le retour ; pas d'annonce vocale par-dessus).
+            self.player.scrub(self.meta.full_path, self.position_ms,
+                              audio_index=self._preview_audio_index)
         else:
             if speak_it:
                 self._announce_position()
 
     # ------------------------------------------------------------------ lecture
     def _stop_if_playing(self):
+        self._is_playing_back = False
         if self.player.is_playing():
             self.player.stop()
 
@@ -415,6 +417,7 @@ class SegmentEditorFrame(wx.Frame):
     def _start_playback(self, from_ms):
         """Démarre la lecture selon le mode : montage (saute les parties jetées) ou
         tout, en partant de ``from_ms``."""
+        self._is_playing_back = True
         if self._skip_discarded:
             self._start_montage(from_ms)
         else:
@@ -424,6 +427,7 @@ class SegmentEditorFrame(wx.Frame):
         """Espace : Lecture / Stop. Stop revient à l'ancre (point de départ)."""
         if self.player.is_playing():
             self.player.stop()
+            self._is_playing_back = False
             self.position_ms = self._play_anchor_ms
             self._sync_position_label()
             self._say_transport(_("Stopped, back at {time}").format(time=format_timecode(self.position_ms)))
@@ -435,6 +439,7 @@ class SegmentEditorFrame(wx.Frame):
         """Ctrl+Espace : Pause / Reprise. Pause fige au playhead (le curseur s'y pose)."""
         if self.player.is_playing():
             self.player.stop()
+            self._is_playing_back = False
             self.position_ms = max(0, min(int(self._last_playhead_ms), self.duration_ms))
             self._sync_position_label()
             self._say_transport(_("Paused at {time}").format(time=format_timecode(self.position_ms)))
@@ -466,6 +471,7 @@ class SegmentEditorFrame(wx.Frame):
         self.position_ms = seg.start_ms
         self._sync_position_label()
         self._say_transport(_("Playing segment {index}").format(index=index + 1))
+        self._is_playing_back = True
         self._play_from(seg.start_ms, end_ms=seg.end_ms)
 
     def _audio_track_label(self, ordinal, track):
@@ -502,6 +508,7 @@ class SegmentEditorFrame(wx.Frame):
                 time=format_timecode(self._last_playhead_ms)))
 
     def _on_play_finished(self):
+        self._is_playing_back = False
         self._sync_position_label()
 
     def on_scrub_toggle(self, event):
@@ -683,6 +690,18 @@ class SegmentEditorFrame(wx.Frame):
         new_index = max(0, min(cur + direction, len(self.plan.segments) - 1))
         self._select_row(new_index)
         self._seek_to(self.plan.segments[new_index].start_ms)
+
+    def apply_project_plan(self, plan_dict):
+        """Applique le plan d'un projet ouvert **directement** (le host vient d'ouvrir
+        le média référencé par le .amccut). Pas de garde « fichier différent » : le
+        média est celui du projet."""
+        self.plan = segmods.plan_from_dict(plan_dict or {}, duration_ms=self.duration_ms)
+        self._undo_stack.clear()
+        self._redo_stack.clear()
+        self._dirty = False
+        self._refresh_segment_list(select_index=0)
+        self._update_status()
+        speak(_("Project loaded"))
 
     def _set_selected_boundary(self, start):
         """Caler le début (start=True) ou la fin (start=False) du segment
