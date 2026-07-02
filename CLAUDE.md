@@ -92,6 +92,12 @@ Two layers, mirroring AMC:
   - `episode_parse.py`, `metadata_edit.py` — **dormant AMC carryover** (filename SxxExx parsing +
     file-tag/cover-art field maps). Not wired into the cutter loop, and `metadata_edit.py` still
     imports a `metadata_retag.py` that wasn't carried over. Leave alone until the editor grows tagging.
+  - `updater.py` — GitHub-Releases updater (stdlib only): version compare, SHA-256-verified installer
+    download, silent Inno install after exit, startup artifact cleanup. **Wired** (see `ui/segment_editor.py`).
+  - `support.py`, `announce.py`, `error_report.py` — support-report + startup-announcement client for the
+    shared `mathieumartin.ovh` app-backend (`_APP_ID = "ame"`). Bearer loaded from **`_secrets.py`
+    (gitignored)** — copy `_secrets.example.py`. Support dialog + announce-at-startup are wired, but the
+    features **no-op until the backend is deployed with the `ame` bearer** (`AME_BEARER_SECRET`).
 
 `bin/ffmpeg.exe` and `bin/ffprobe.exe` are **git-tracked** (~100 MB each) — the app is useless
 without them and PyInstaller bundles them from `bin/`.
@@ -130,10 +136,13 @@ without them and PyInstaller bundles them from `bin/`.
 - App id / config dir: `%APPDATA%\AccessibleMediaEditor` (`core/debug_session.py`).
 - Installer `AppId` GUID: `{8EF4AA32-F74A-45FD-85C6-1E6DDC6D42AE}` (fresh, distinct from AMC).
 - GitHub repo **exists and is public**: `math65/accessible-media-editor` (default branch `master`).
-  `core/app_info.py` already points at it (`APP_GITHUB_OWNER`/`APP_GITHUB_REPOSITORY`), so the
-  updater/support/announce URLs resolve — but there are **no releases yet** and the support/announce
-  **backend app-id still does not exist**, so do not wire/enable the updater or support flows until a
-  release is published and a backend is set up.
+  `core/app_info.py` points at it, and the **updater is wired** — but there are **no releases yet**, so
+  the update check finds nothing and fails silently. Publish a release before relying on it.
+- **Support/announce backend**: app-id `ame` is registered in the `app-backend` repo (`config/apps.json`,
+  `bearer_env: AME_BEARER_SECRET`). The client is wired (support dialog + announce-at-startup) but stays
+  dormant until the server is deployed with the bearer. To activate: push `app-backend`, set
+  `AME_BEARER_SECRET` in the server env (Caddy-injected), restart the service — and put the **same** value
+  in the client's gitignored `core/_secrets.py` (`SUPPORT_BEARER`).
 
 ## Relationship to Accessible Media Converter
 
