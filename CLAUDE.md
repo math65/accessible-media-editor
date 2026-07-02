@@ -37,12 +37,13 @@ uv run main.py     # run from source (opens a file picker, then the editor)
 `installer/AccessibleMediaEditor.iss`. `build_release.ps1` now points at the AME spec/installer, the
 version-resource env var is `AME_VERSION_FILE` (also read in the `.spec`), the dead `docs/{en,fr}/index.html`
 assertion is gone, and the release-notes markers are `AME-RELEASE-NOTES`. The `.gitignore` was de-AMC'd
-too. **Still not run through an actual PyInstaller + Inno Setup build**, so treat a real release as
-unproven until someone runs it. Two known leftovers: (1) `installer/AccessibleMediaEditor.iss` still
-implements AMC's **"Convert with Accessible Media Converter"** Explorer verb (context-menu label +
-`AccessibleMediaConverter` registry subkeys) — a product decision for AME (an *editor*, likely "Edit
-with…"), left untouched on purpose. (2) The updater/support/announce backends are **not wired** in
-`main.py` yet (no GitHub repo / backend app-id exists for AME — see below).
+too, and the Explorer verb in `installer/AccessibleMediaEditor.iss` is now **"Edit with Accessible Media
+Editor" / "Éditer avec…"** under its own `AccessibleMediaEditor` registry subkey (deliberately distinct
+from AMC's `AccessibleMediaConverter` subkey so both context-menu entries coexist while AMC is still
+installed). The `.iss` carries a UTF-8 BOM so Inno Setup renders the accented French message correctly —
+keep the BOM if you edit it. **Still not run through an actual PyInstaller + Inno Setup build**, so treat
+a real release as unproven until someone runs it. The updater/support/announce backends are **not wired**
+in `main.py` yet (no GitHub repo / backend app-id exists for AME — see below).
 
 **Translations** (English source, French shipped):
 ```powershell

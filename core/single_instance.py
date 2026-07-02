@@ -1,7 +1,7 @@
 """Relais de fichiers pour l'instance unique.
 
 Quand l'utilisateur sélectionne plusieurs fichiers dans l'explorateur et lance
-« Convertir avec Accessible Media Converter », Windows exécute le verbe une fois
+« Éditer avec Accessible Media Editor », Windows exécute le verbe une fois
 par fichier — donc N processus. On garde une seule fenêtre (wx.SingleInstanceChecker
 côté main.py) et les instances secondaires déposent leurs chemins dans un fichier
 relais que l'instance maître draine via un wx.Timer.

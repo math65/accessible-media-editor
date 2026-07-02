@@ -1,4 +1,4 @@
-#ifndef AppName
+﻿#ifndef AppName
   #define AppName "Accessible Media Editor"
 #endif
 #ifndef AppVersion
@@ -51,8 +51,8 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "french"; MessagesFile: "compiler:Languages\French.isl"
 
 [CustomMessages]
-english.ConvertWithApp=Convert with Accessible Media Converter
-french.ConvertWithApp=Convertir avec Accessible Media Converter
+english.EditWithApp=Edit with Accessible Media Editor
+french.EditWithApp=Éditer avec Accessible Media Editor
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
@@ -61,14 +61,16 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Source: "..\dist\{#AppDistDirName}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Registry]
-; Entrée « Convertir avec… » dans le menu contextuel de l'explorateur (fichiers et
+; Entrée « Éditer avec… » dans le menu contextuel de l'explorateur (fichiers et
 ; dossiers). Lance l'exe avec le chemin sélectionné (%1). Nettoyé à la désinstallation.
-Root: HKCR; Subkey: "*\shell\AccessibleMediaConverter"; ValueType: string; ValueName: ""; ValueData: "{cm:ConvertWithApp}"; Flags: uninsdeletekey
-Root: HKCR; Subkey: "*\shell\AccessibleMediaConverter"; ValueType: string; ValueName: "Icon"; ValueData: "{app}\{#AppExeName}"; Flags: uninsdeletekey
-Root: HKCR; Subkey: "*\shell\AccessibleMediaConverter\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExeName}"" ""%1"""; Flags: uninsdeletekey
-Root: HKCR; Subkey: "Directory\shell\AccessibleMediaConverter"; ValueType: string; ValueName: ""; ValueData: "{cm:ConvertWithApp}"; Flags: uninsdeletekey
-Root: HKCR; Subkey: "Directory\shell\AccessibleMediaConverter"; ValueType: string; ValueName: "Icon"; ValueData: "{app}\{#AppExeName}"; Flags: uninsdeletekey
-Root: HKCR; Subkey: "Directory\shell\AccessibleMediaConverter\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExeName}"" ""%1"""; Flags: uninsdeletekey
+; Sous-clé distincte de celle d'AMC (AccessibleMediaConverter) : les deux menus
+; contextuels coexistent tant qu'AMC et AME sont installés côte à côte.
+Root: HKCR; Subkey: "*\shell\AccessibleMediaEditor"; ValueType: string; ValueName: ""; ValueData: "{cm:EditWithApp}"; Flags: uninsdeletekey
+Root: HKCR; Subkey: "*\shell\AccessibleMediaEditor"; ValueType: string; ValueName: "Icon"; ValueData: "{app}\{#AppExeName}"; Flags: uninsdeletekey
+Root: HKCR; Subkey: "*\shell\AccessibleMediaEditor\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExeName}"" ""%1"""; Flags: uninsdeletekey
+Root: HKCR; Subkey: "Directory\shell\AccessibleMediaEditor"; ValueType: string; ValueName: ""; ValueData: "{cm:EditWithApp}"; Flags: uninsdeletekey
+Root: HKCR; Subkey: "Directory\shell\AccessibleMediaEditor"; ValueType: string; ValueName: "Icon"; ValueData: "{app}\{#AppExeName}"; Flags: uninsdeletekey
+Root: HKCR; Subkey: "Directory\shell\AccessibleMediaEditor\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExeName}"" ""%1"""; Flags: uninsdeletekey
 
 [Icons]
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName}"

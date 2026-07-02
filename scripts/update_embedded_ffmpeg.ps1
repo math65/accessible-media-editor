@@ -11,7 +11,7 @@ $ProjectRoot = Split-Path -Parent $PSScriptRoot
 $BinDir = Join-Path $ProjectRoot "bin"
 $FfmpegPath = Join-Path $BinDir "ffmpeg.exe"
 $FfprobePath = Join-Path $BinDir "ffprobe.exe"
-$UserAgent = "AccessibleMediaConverter-FFmpeg-Updater"
+$UserAgent = "AccessibleMediaEditor-FFmpeg-Updater"
 
 function Get-ToolVersionLine {
     param(
