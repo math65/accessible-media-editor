@@ -1,0 +1,80 @@
+# ------------------------------------------------
+# Claude Code local settings (personal, machine-specific)
+# ------------------------------------------------
+.claude/settings.local.json
+
+# ------------------------------------------------
+# Python / Virtual Environment
+# ------------------------------------------------
+# Compiled bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments (where your libraries are installed)
+.venv/
+venv/
+env/
+ENV/
+
+# ------------------------------------------------
+# Distribution / Building (PyInstaller)
+# ------------------------------------------------
+# Folders generated when creating the .exe
+build/
+dist/
+*.spec
+!UniversalTranscoder.spec
+
+# ------------------------------------------------
+# IDE / Editor Settings
+# ------------------------------------------------
+# VS Code specific settings
+.vscode/
+*.swp
+
+# ------------------------------------------------
+# Universal Transcoder Specifics
+# ------------------------------------------------
+# 1. User Configuration
+# We ignore this so your personal settings don't go to Git
+config.json
+debug.log
+crash_report.txt
+error_log.txt
+
+# 2. Binary Dependencies (FFmpeg)
+# It is bad practice to commit large .exe files to Git.
+# You should download them manually or use a script.
+bin/ffmpeg.exe
+bin/ffprobe.exe
+# Or ignore the whole bin folder if it only contains tools:
+# bin/
+
+# 3. Compiled Translations
+# We track the human-readable .po files, but ignore the compiled .mo binary files
+locales/**/*.mo
+server/support-report/storage/ratelimit/*.json
+
+# 4. Test Output / Media Files
+# Ignore media files you might use for testing to keep repo light
+*.mp3
+*.mp4
+*.mkv
+*.avi
+*.wav
+*.flac
+*.m4a
+*.mov
+
+# ------------------------------------------------
+# OS Generated Files
+# ------------------------------------------------
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS (if you ever move the project)
+.DS_Store

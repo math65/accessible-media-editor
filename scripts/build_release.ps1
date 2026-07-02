@@ -1,0 +1,257 @@
+[CmdletBinding()]
+param()
+
+$ErrorActionPreference = "Stop"
+Set-StrictMode -Version Latest
+
+$ProjectRoot = Split-Path -Parent $PSScriptRoot
+$PythonExe = Join-Path $ProjectRoot ".venv\Scripts\python.exe"
+$SpecPath = Join-Path $ProjectRoot "UniversalTranscoder.spec"
+$InstallerScript = Join-Path $ProjectRoot "installer\UniversalTranscoder.iss"
+$DocumentationIndexes = @(
+    (Join-Path $ProjectRoot "docs\fr\index.html"),
+    (Join-Path $ProjectRoot "docs\en\index.html")
+)
+$BuildDir = Join-Path $ProjectRoot "build"
+$DistDir = Join-Path $ProjectRoot "dist"
+$VersionInfoPath = Join-Path $BuildDir "windows_version_info.txt"
+
+function Assert-FileExists {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path,
+        [Parameter(Mandatory = $true)]
+        [string]$Label
+    )
+
+    if (-not (Test-Path -LiteralPath $Path)) {
+        throw "$Label not found: $Path"
+    }
+}
+
+function Invoke-PythonInline {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Script,
+        [Parameter(Mandatory = $true)]
+        [string]$ErrorMessage
+    )
+
+    $Script | & $PythonExe -
+    if ($LASTEXITCODE -ne 0) {
+        throw $ErrorMessage
+    }
+}
+
+function Get-IsccPath {
+    $fromPath = Get-Command iscc.exe -ErrorAction SilentlyContinue
+    if ($fromPath) {
+        return $fromPath.Source
+    }
+
+    $candidates = @(
+        (Join-Path $env:LOCALAPPDATA "Programs\Inno Setup 6\ISCC.exe"),
+        (Join-Path ${env:ProgramFiles(x86)} "Inno Setup 6\ISCC.exe"),
+        (Join-Path $env:ProgramFiles "Inno Setup 6\ISCC.exe")
+    )
+
+    foreach ($candidate in $candidates) {
+        if ($candidate -and (Test-Path -LiteralPath $candidate)) {
+            return $candidate
+        }
+    }
+
+    return $null
+}
+
+Assert-FileExists -Path $PythonExe -Label "Python executable"
+Assert-FileExists -Path $SpecPath -Label "PyInstaller spec"
+Assert-FileExists -Path $InstallerScript -Label "Inno Setup script"
+foreach ($documentationIndex in $DocumentationIndexes) {
+    Assert-FileExists -Path $documentationIndex -Label "Documentation index"
+}
+Assert-FileExists -Path (Join-Path $ProjectRoot "bin\ffmpeg.exe") -Label "FFmpeg binary"
+Assert-FileExists -Path (Join-Path $ProjectRoot "bin\ffprobe.exe") -Label "FFprobe binary"
+
+Push-Location $ProjectRoot
+try {
+    # Dependencies are managed with uv. Sync the locked environment (runtime + dev
+    # group: PyInstaller, polib) so the build always runs against pyproject/uv.lock.
+    # --frozen fails instead of silently re-resolving, keeping release builds reproducible.
+    $uv = Get-Command uv -ErrorAction SilentlyContinue
+    if ($uv) {
+        Write-Host "Syncing dependencies with uv (locked, incl. dev group)..."
+        & $uv.Source sync --frozen
+        if ($LASTEXITCODE -ne 0) {
+            throw "uv sync failed. Run 'uv sync' manually, then re-run the build."
+        }
+    }
+
+    & $PythonExe -c "import PyInstaller, polib"
+    if ($LASTEXITCODE -ne 0) {
+        throw "Required build dependencies are missing. Run 'uv sync' to install them."
+    }
+
+    $metadataJson = & $PythonExe -c "import json; from core.app_info import APP_EXE_NAME, APP_EXECUTABLE_FILENAME, APP_ID, APP_INSTALLER_BASENAME, APP_INSTALLER_FILENAME, APP_INSTALL_DIRNAME, APP_NAME, APP_PUBLISHER, APP_VERSION, APP_VERSION_WIN; print(json.dumps({'APP_EXE_NAME': APP_EXE_NAME, 'APP_EXECUTABLE_FILENAME': APP_EXECUTABLE_FILENAME, 'APP_ID': APP_ID, 'APP_INSTALLER_BASENAME': APP_INSTALLER_BASENAME, 'APP_INSTALLER_FILENAME': APP_INSTALLER_FILENAME, 'APP_INSTALL_DIRNAME': APP_INSTALL_DIRNAME, 'APP_NAME': APP_NAME, 'APP_PUBLISHER': APP_PUBLISHER, 'APP_VERSION': APP_VERSION, 'APP_VERSION_WIN': APP_VERSION_WIN}))"
+    if ($LASTEXITCODE -ne 0) {
+        throw "Unable to load application metadata from core.app_info."
+    }
+    $metadata = $metadataJson | ConvertFrom-Json
+    $innoAppId = $metadata.APP_ID -replace "^\{", "{{"
+    $distAppDir = Join-Path $DistDir $metadata.APP_EXE_NAME
+
+    Write-Host "Compiling translation catalogs..."
+    $compileTranslationsScript = @"
+from pathlib import Path
+import polib
+
+project_root = Path(r"$ProjectRoot")
+compiled = []
+for po_path in sorted(project_root.glob("locales/*/LC_MESSAGES/*.po")):
+    mo_path = po_path.with_suffix(".mo")
+    po = polib.pofile(po_path)
+    po.save_as_mofile(mo_path)
+    compiled.append((po_path, mo_path))
+
+if not compiled:
+    raise SystemExit("No translation catalogs found.")
+
+for source_path, output_path in compiled:
+    print(f"Compiled {source_path} -> {output_path}")
+"@
+    Invoke-PythonInline -Script $compileTranslationsScript -ErrorMessage "Translation compilation failed."
+
+    if (Test-Path -LiteralPath $BuildDir) {
+        Remove-Item -LiteralPath $BuildDir -Recurse -Force
+    }
+    if (Test-Path -LiteralPath $DistDir) {
+        Remove-Item -LiteralPath $DistDir -Recurse -Force
+    }
+    New-Item -ItemType Directory -Path $BuildDir | Out-Null
+
+    Write-Host "Generating Windows version resource..."
+    $versionInfoScript = @"
+from pathlib import Path
+from core.app_info import (
+    APP_EXE_NAME,
+    APP_EXECUTABLE_FILENAME,
+    APP_NAME,
+    APP_PUBLISHER,
+    APP_VERSION,
+    APP_VERSION_WIN,
+)
+
+version_tuple = tuple(int(part) for part in APP_VERSION_WIN.split("."))
+version_text = f'''# UTF-8
+#
+# Auto-generated by scripts/build_release.ps1
+VSVersionInfo(
+  ffi=FixedFileInfo(
+    filevers={version_tuple},
+    prodvers={version_tuple},
+    mask=0x3f,
+    flags=0x0,
+    OS=0x40004,
+    fileType=0x1,
+    subtype=0x0,
+    date=(0, 0)
+  ),
+  kids=[
+    StringFileInfo([
+      StringTable(
+        '040904B0',
+        [
+          StringStruct('CompanyName', '{APP_PUBLISHER}'),
+          StringStruct('FileDescription', '{APP_NAME}'),
+          StringStruct('FileVersion', '{APP_VERSION_WIN}'),
+          StringStruct('InternalName', '{APP_EXE_NAME}'),
+          StringStruct('OriginalFilename', '{APP_EXECUTABLE_FILENAME}'),
+          StringStruct('ProductName', '{APP_NAME}'),
+          StringStruct('ProductVersion', '{APP_VERSION}')
+        ]
+      )
+    ]),
+    VarFileInfo([VarStruct('Translation', [1033, 1200])])
+  ]
+)
+'''
+
+output_path = Path(r"$VersionInfoPath")
+output_path.write_text(version_text, encoding="utf-8")
+print(output_path)
+"@
+    Invoke-PythonInline -Script $versionInfoScript -ErrorMessage "Unable to generate the Windows version resource."
+
+    $env:UT_VERSION_FILE = $VersionInfoPath
+    try {
+        Write-Host "Building application executable with PyInstaller..."
+        & $PythonExe -m PyInstaller --clean --noconfirm $SpecPath
+        if ($LASTEXITCODE -ne 0) {
+            throw "PyInstaller build failed."
+        }
+    }
+    finally {
+        Remove-Item Env:UT_VERSION_FILE -ErrorAction SilentlyContinue
+    }
+
+    Assert-FileExists -Path $distAppDir -Label "Built application folder"
+    $distExePath = Join-Path $distAppDir $metadata.APP_EXECUTABLE_FILENAME
+    Assert-FileExists -Path $distExePath -Label "Built executable"
+    Write-Host "Application folder built: $distAppDir"
+    Write-Host "Executable built: $distExePath"
+
+    $isccPath = Get-IsccPath
+    if (-not $isccPath) {
+        throw "Inno Setup Compiler (ISCC.exe) was not found. Install Inno Setup 6 and rerun the script. The application folder was built successfully: $distAppDir"
+    }
+
+    Write-Host "Building installer with Inno Setup..."
+    & $isccPath `
+        "/DAppName=$($metadata.APP_NAME)" `
+        "/DAppDistDirName=$($metadata.APP_EXE_NAME)" `
+        "/DAppVersion=$($metadata.APP_VERSION)" `
+        "/DAppExeName=$($metadata.APP_EXECUTABLE_FILENAME)" `
+        "/DAppOutputBaseFilename=$($metadata.APP_INSTALLER_BASENAME)" `
+        "/DAppId=$innoAppId" `
+        "/DAppInstallDirName=$($metadata.APP_INSTALL_DIRNAME)" `
+        "/DAppPublisher=$($metadata.APP_PUBLISHER)" `
+        $InstallerScript
+    if ($LASTEXITCODE -ne 0) {
+        throw "Inno Setup build failed."
+    }
+
+    $installerPath = Join-Path $DistDir $metadata.APP_INSTALLER_FILENAME
+    Assert-FileExists -Path $installerPath -Label "Built installer"
+    Write-Host "Installer built: $installerPath"
+
+    $version = $metadata.APP_VERSION
+    $notesEnPath = Join-Path $ProjectRoot "release-notes\v$version.en.md"
+    $notesFrPath = Join-Path $ProjectRoot "release-notes\v$version.fr.md"
+    $notesCombinedPath = Join-Path $DistDir "release-notes.md"
+
+    if ((Test-Path -LiteralPath $notesEnPath) -and (Test-Path -LiteralPath $notesFrPath)) {
+        $notesEn = Get-Content -LiteralPath $notesEnPath -Raw -Encoding UTF8
+        $notesFr = Get-Content -LiteralPath $notesFrPath -Raw -Encoding UTF8
+        $combined = @"
+## English
+<!-- AMC-RELEASE-NOTES:en:start -->
+$($notesEn.Trim())
+<!-- AMC-RELEASE-NOTES:en:end -->
+
+## Fran$([char]231)ais
+<!-- AMC-RELEASE-NOTES:fr:start -->
+$($notesFr.Trim())
+<!-- AMC-RELEASE-NOTES:fr:end -->
+"@
+        [System.IO.File]::WriteAllText($notesCombinedPath, $combined, [System.Text.UTF8Encoding]::new($false))
+        Write-Host "Combined release notes written: $notesCombinedPath"
+    } elseif (Test-Path -LiteralPath (Join-Path $ProjectRoot "release-notes\v$version.md")) {
+        Copy-Item -LiteralPath (Join-Path $ProjectRoot "release-notes\v$version.md") -Destination $notesCombinedPath
+        Write-Host "Release notes copied: $notesCombinedPath"
+    } else {
+        Write-Warning "No release notes found for v$version. Expected release-notes\v$version.en.md + .fr.md or release-notes\v$version.md"
+    }
+}
+finally {
+    Pop-Location
+}

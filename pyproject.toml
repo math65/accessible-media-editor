@@ -1,0 +1,27 @@
+[project]
+name = "accessible-media-editor"
+version = "0.1.0"
+description = "Accessible audio/video editor for blind and visually impaired users, built with wxPython and embedded FFmpeg. Bootstrapped from the Accessible Media Converter cutter."
+readme = "README.md"
+requires-python = ">=3.14"
+license = { text = "Proprietary" }
+authors = [{ name = "Mathieu Martin" }]
+dependencies = [
+    "wxPython>=4.2.1",
+    "accessible_output2>=0.17",
+    "sounddevice>=0.5.5",
+]
+
+[dependency-groups]
+# Build / tooling dependencies, not shipped at runtime.
+#   pyinstaller -> packages the .exe (scripts/build_release.ps1)
+#   polib       -> compiles .po -> .mo translations (core/i18n.py, scripts/manage_i18n.py)
+dev = [
+    "pyinstaller>=6.19",
+    "polib>=1.2",
+]
+
+[tool.uv]
+# Keep the project virtual environment at .venv so existing tooling
+# (scripts/build_release.ps1, the .venv\Scripts\python.exe convention) keeps working.
+package = false
