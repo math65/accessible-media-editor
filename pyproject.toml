@@ -46,3 +46,8 @@ select = ["E", "W", "F", "I", "UP", "B", "BLE"]
 # pythonpath="." so `from core... import` resolves with the un-installed (package=false) layout.
 testpaths = ["tests"]
 pythonpath = ["."]
+# `integration` = tests that drive the real embedded FFmpeg (slower, write files).
+# Fast pure-logic loop: pytest -m "not integration"
+markers = [
+    "integration: exercises the real embedded FFmpeg (cuts audio, reads durations)",
+]
