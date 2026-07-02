@@ -49,6 +49,7 @@ from core.updater import (
     save_updater_state,
 )
 from ui.announcement_dialog import AnnouncementDialog
+from ui.preferences_dialog import PreferencesDialog
 from ui.support_dialog import SupportContactDialog
 from ui.update_dialog import UpdateDialog
 
@@ -249,12 +250,7 @@ class SegmentEditorFrame(wx.Frame):
         bar.Append(m_edit, _("&Edit"))
 
         m_opt = wx.Menu()
-        self.item_opt_transport = m_opt.AppendCheckItem(wx.ID_ANY, _("Announce playback actions"))
-        self.item_opt_transport.Check(self._opt_announce_transport)
-        self.Bind(wx.EVT_MENU, self.on_toggle_announce_transport, self.item_opt_transport)
-        self.item_opt_position = m_opt.AppendCheckItem(wx.ID_ANY, _("Announce position when moving"))
-        self.item_opt_position.Check(self._opt_announce_position)
-        self.Bind(wx.EVT_MENU, self.on_toggle_announce_position, self.item_opt_position)
+        self._append(m_opt, _("&Preferences...") + "\tCtrl+,", self.on_preferences)
         bar.Append(m_opt, _("&Options"))
 
         m_help = wx.Menu()
@@ -525,19 +521,12 @@ class SegmentEditorFrame(wx.Frame):
         if callable(saver):
             saver()
 
-    def on_toggle_announce_transport(self, event):
-        self._opt_announce_transport = self.item_opt_transport.IsChecked()
-        self._settings['cutter_announce_transport'] = self._opt_announce_transport
-        self._persist()
-        speak(_("Playback announcements on") if self._opt_announce_transport
-              else _("Playback announcements off"))
-
-    def on_toggle_announce_position(self, event):
-        self._opt_announce_position = self.item_opt_position.IsChecked()
-        self._settings['cutter_announce_position'] = self._opt_announce_position
-        self._persist()
-        speak(_("Position announcements on") if self._opt_announce_position
-              else _("Position announcements off"))
+    def on_preferences(self, event):
+        dlg = PreferencesDialog(self)
+        try:
+            dlg.ShowModal()
+        finally:
+            dlg.Destroy()
 
     def _show_shortcuts(self):
         text = _(
