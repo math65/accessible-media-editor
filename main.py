@@ -35,6 +35,14 @@ def main():
     try:
         init_i18n(raw_config)
 
+        # Nettoie un installeur de MAJ téléchargé lors d'une session précédente
+        # (l'app a redémarré après une mise à jour). Best-effort, jamais bloquant.
+        try:
+            from core.updater import cleanup_update_artifacts
+            cleanup_update_artifacts()
+        except Exception:  # noqa: BLE001
+            logging.exception("Échec du nettoyage des artefacts de mise à jour.")
+
         logging.info("Démarrage de wx.App...")
         app = wx.App(False)
 

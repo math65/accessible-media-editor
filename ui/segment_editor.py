@@ -25,16 +25,28 @@ Le résultat est renvoyé à l'appelant par le callback ``on_export(meta, plan, 
 
 import copy
 import json
+import logging
 import os
 import threading
 
 import wx
 
 from core import segments as segmods
+from core.app_info import APP_VERSION
 from core.audio_player import AudioPlayer
 from core.ffmpeg_helpers import get_ffmpeg_path
+from core.i18n import get_current_language_code
 from core.silence import detect_silences, silence_points
 from core.speech import speak
+from core.updater import (
+    UpdateCheckError,
+    clear_updater_state,
+    fetch_latest_release,
+    is_release_newer,
+    launch_installer_after_exit,
+    save_updater_state,
+)
+from ui.update_dialog import UpdateDialog
 
 # Pas de déplacement proposés (libellé, millisecondes).
 _STEP_CHOICES = [
@@ -116,6 +128,10 @@ class SegmentEditorFrame(wx.Frame):
         self._montage_queue = []     # régions gardées restant à jouer (mode montage)
         self._skip_discarded = False # mode montage : la lecture saute les parties jetées
         self._dirty = False          # découpes modifiées depuis dernier export/enregistrement
+        # Mises à jour (via GitHub Releases) : vérif au démarrage + menu Aide.
+        self._update_check_in_progress = False
+        self._startup_update_check_scheduled = False
+        self._is_installing_update = False
         self.player = AudioPlayer()
 
         self._build_menu()
@@ -131,6 +147,9 @@ class SegmentEditorFrame(wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.on_close)
         self.CentreOnParent()
         self.Show()
+        # Vérification silencieuse des mises à jour peu après l'ouverture (différée
+        # pour ne pas retarder l'affichage ; ne fait rien si l'option est désactivée).
+        wx.CallAfter(self.schedule_startup_update_check)
         wx.CallAfter(self.list_ctrl.SetFocus)
 
     # ------------------------------------------------------------------ menus
@@ -236,6 +255,7 @@ class SegmentEditorFrame(wx.Frame):
 
         m_help = wx.Menu()
         self._append(m_help, _("Keyboard shortcuts") + "\tF1", lambda e: self._show_shortcuts())
+        self._append(m_help, _("Check for &Updates..."), self.on_check_updates)
         bar.Append(m_help, _("&Help"))
 
         self.SetMenuBar(bar)
@@ -737,6 +757,101 @@ class SegmentEditorFrame(wx.Frame):
         except Exception:  # noqa: BLE001
             pass
 
+    # ------------------------------------------------------------ mises à jour
+    def schedule_startup_update_check(self):
+        """Vérification silencieuse au démarrage, si l'option est active."""
+        if self._startup_update_check_scheduled:
+            return
+        if not self._settings.get('check_updates_on_startup', False):
+            return
+        self._startup_update_check_scheduled = True
+        wx.CallLater(1200, lambda: self._start_update_check(interactive=False))
+
+    def on_check_updates(self, event):
+        self._start_update_check(interactive=True)
+
+    def _start_update_check(self, interactive):
+        if self._update_check_in_progress:
+            return
+        self._update_check_in_progress = True
+        if interactive:
+            self._set_frame_status(_("Checking for updates..."))
+
+        worker = threading.Thread(
+            target=self._update_check_worker, args=(interactive,), daemon=True,
+        )
+        worker.start()
+
+    def _update_check_worker(self, interactive):
+        release_info = None
+        error_message = None
+        try:
+            release_info = fetch_latest_release(
+                lang=get_current_language_code(),
+                include_prereleases=bool(self._settings.get('include_prereleases', False)),
+            )
+        except UpdateCheckError as exc:
+            error_message = str(exc)
+        except Exception:  # noqa: BLE001
+            logging.exception("Erreur inattendue lors de la vérification des mises à jour.")
+            error_message = _("Unable to check for updates.")
+
+        wx.CallAfter(self._finish_update_check, interactive, release_info, error_message)
+
+    def _finish_update_check(self, interactive, release_info, error_message):
+        self._update_check_in_progress = False
+        if self._closed:
+            return
+
+        if error_message:
+            if interactive:
+                wx.MessageBox(error_message, _("Error"), wx.ICON_ERROR)
+                self._set_frame_status(_("Unable to check for updates."))
+            else:
+                logging.info("Vérification auto des MAJ ignorée : %s", error_message)
+            return
+
+        if not release_info:
+            if interactive:
+                wx.MessageBox(_("Unable to check for updates."), _("Error"), wx.ICON_ERROR)
+            return
+
+        if not is_release_newer(release_info.version, APP_VERSION):
+            if interactive:
+                wx.MessageBox(_("You are up to date."), _("Info"), wx.ICON_INFORMATION)
+                self._set_frame_status(_("You are up to date."))
+            else:
+                logging.info("Vérification auto des MAJ : aucune version plus récente.")
+            return
+
+        self._set_frame_status(_("Update available: {version}").format(version=release_info.version))
+        dlg = UpdateDialog(self, release_info)
+        try:
+            dlg.ShowModal()
+        finally:
+            dlg.Destroy()
+
+    def begin_install_update(self, installer_path, version):
+        """Appelée par UpdateDialog une fois l'installeur téléchargé : persiste
+        l'état, lance l'installeur en silencieux après la sortie, puis ferme l'app."""
+        state_saved = False
+        try:
+            save_updater_state(installer_path, version, cleanup_pending=True)
+            state_saved = True
+            launch_installer_after_exit(installer_path)
+        except Exception:  # noqa: BLE001
+            if state_saved:
+                clear_updater_state()
+            logging.exception("Impossible de lancer l'installeur de mise à jour.")
+            wx.MessageBox(_("Unable to start the update installer."), _("Error"), wx.ICON_ERROR)
+            self._set_frame_status(_("Unable to start the update installer."))
+            return False
+
+        self._is_installing_update = True
+        self._set_frame_status(_("Closing application to install update..."))
+        self.Close()
+        return True
+
     # ---------------------------------------------------------------- silences
     def _start_silence_detection(self):
         path = self.meta.full_path
@@ -921,8 +1036,9 @@ class SegmentEditorFrame(wx.Frame):
 
     def on_close(self, event):
         # Confirmation si des découpes non exportées / non enregistrées seraient
-        # perdues (Alt+F4, Ctrl+W…).
-        if self._dirty:
+        # perdues (Alt+F4, Ctrl+W…). Sautée lors d'une install de MAJ (l'utilisateur
+        # a déjà confirmé dans le dialogue de mise à jour).
+        if self._dirty and not self._is_installing_update:
             resp = wx.MessageBox(
                 _("Close without saving? Your cuts will be lost."),
                 _("Cut / Split"), wx.YES_NO | wx.ICON_WARNING, self)
