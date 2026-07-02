@@ -6,7 +6,7 @@ import sys
 
 try:
     import polib
-except Exception:
+except Exception:  # noqa: BLE001
     polib = None
 
 AUTO_LANGUAGE_CODE = "auto"
@@ -52,7 +52,7 @@ def install_language(preferred_lang=AUTO_LANGUAGE_CODE, prefer_po=True):
         CURRENT_LANGUAGE_CODE = lang_code
         CURRENT_LANGUAGE_SOURCE = 'mo'
         return lang_code, 'mo'
-    except Exception:
+    except Exception:  # noqa: BLE001
         _install_identity_translation()
         CURRENT_LANGUAGE_CODE = FALLBACK_LANGUAGE_CODE
         CURRENT_LANGUAGE_SOURCE = 'source'
@@ -94,7 +94,7 @@ def normalize_ui_language(preferred_lang):
 def get_system_language_code():
     try:
         sys_lang = locale.getlocale()[0] or locale.getdefaultlocale()[0]
-    except Exception:
+    except Exception:  # noqa: BLE001
         sys_lang = None
 
     if sys_lang and sys_lang.lower().startswith('fr'):
@@ -134,5 +134,5 @@ def _install_from_po(locales_dir, lang_code):
 
         builtins.__dict__['_'] = lambda s: mapping.get(s, s)
         return True
-    except Exception:
+    except Exception:  # noqa: BLE001
         return False

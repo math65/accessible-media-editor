@@ -34,7 +34,7 @@ def _ensure_speakers():
                 'accessible_output2.outputs.' + module_name, fromlist=[class_name]
             )
             _speakers.append(getattr(module, class_name)())
-        except Exception:
+        except Exception:  # noqa: BLE001
             logging.debug("Sortie vocale %s indisponible.", module_name, exc_info=True)
 
 
@@ -51,5 +51,5 @@ def speak(message, interrupt=True):
             if speaker.is_active():
                 speaker.speak(message, interrupt=interrupt)
                 return
-        except Exception:
+        except Exception:  # noqa: BLE001
             logging.debug("Échec d'annonce via %s.", type(speaker).__name__, exc_info=True)

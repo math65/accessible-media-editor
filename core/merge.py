@@ -237,10 +237,10 @@ class MergeTask:
         finally:
             try:
                 os.unlink(list_path)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass
             if meta_path:
                 try:
                     os.unlink(meta_path)
-                except Exception:
+                except Exception:  # noqa: BLE001
                     pass

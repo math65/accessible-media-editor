@@ -438,7 +438,7 @@ class SegmentEditorFrame(wx.Frame):
         if hasattr(track, 'get_summary'):
             try:
                 summary = track.get_summary()
-            except Exception:
+            except Exception:  # noqa: BLE001
                 summary = ""
         base = _("Track {number}").format(number=ordinal + 1)
         return f"{base}: {summary}" if summary else base
@@ -734,7 +734,7 @@ class SegmentEditorFrame(wx.Frame):
     def _set_frame_status(self, text):
         try:
             self.SetStatusText(text)
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
 
     # ---------------------------------------------------------------- silences
@@ -948,47 +948,63 @@ class SegmentEditorFrame(wx.Frame):
         # Alt+Gauche/Droite = silence précédent/suivant. Les autres combinaisons Alt
         # (Alt+lettre) sont laissées à la barre de menus.
         if alt and key == wx.WXK_LEFT:
-            self._go_silence(-1); return
+            self._go_silence(-1)
+            return
         if alt and key == wx.WXK_RIGHT:
-            self._go_silence(+1); return
+            self._go_silence(+1)
+            return
         if alt:
-            event.Skip(); return
+            event.Skip()
+            return
 
         # Ctrl+Espace = Pause / Reprise (Ctrl+Espace n'est utilisé par aucun contrôle).
         if key == wx.WXK_SPACE and ctrl:
-            self._toggle_pause(); return
+            self._toggle_pause()
+            return
         # Espace = Lecture / Stop (on remplace le rôle natif de la liste).
         if key == wx.WXK_SPACE and not ctrl:
-            self._toggle_play(); return
+            self._toggle_play()
+            return
 
         # Changer le pas : Ctrl+Haut/Bas ou +/- (pavé numérique inclus). Haut/+ =
         # pas plus grand ; Bas/- = pas plus fin. (Haut/Bas seuls restent à la liste.)
         if ctrl and key == wx.WXK_UP:
-            self._change_step(+1); return
+            self._change_step(+1)
+            return
         if ctrl and key == wx.WXK_DOWN:
-            self._change_step(-1); return
+            self._change_step(-1)
+            return
         if key in (wx.WXK_NUMPAD_ADD, ord('+')):
-            self._change_step(+1); return
+            self._change_step(+1)
+            return
         if key in (wx.WXK_NUMPAD_SUBTRACT, ord('-')):
-            self._change_step(-1); return
+            self._change_step(-1)
+            return
 
         # Ctrl+Z / Ctrl+Y (undo/redo) sont des accélérateurs de menu → on laisse
         # passer. Ici on ne traite que les lettres SANS Ctrl.
         if not ctrl:
             if key in (ord('S'), ord('s')):
-                self._mark_start(); return
+                self._mark_start()
+                return
             if key in (ord('E'), ord('e')):
-                self._mark_end(); return
+                self._mark_end()
+                return
             if key in (ord('X'), ord('x')):
-                self._cut_here(); return
+                self._cut_here()
+                return
             if key in (ord('K'), ord('k')):
-                self._toggle_selected_keep(); return
+                self._toggle_selected_keep()
+                return
             if key in (ord('V'), ord('v')):
-                self._verify_cut(); return
+                self._verify_cut()
+                return
             if key in (ord('M'), ord('m')):
-                self._toggle_skip_mode(); return
+                self._toggle_skip_mode()
+                return
         if key == wx.WXK_DELETE:
-            self._remove_selected_boundary(); return
+            self._remove_selected_boundary()
+            return
 
         # Navigation temporelle (Haut/Bas restent à la liste pour choisir un segment).
         if key == wx.WXK_LEFT:
@@ -1000,8 +1016,10 @@ class SegmentEditorFrame(wx.Frame):
                           else self.position_ms + self.step_ms)
             return
         if key == wx.WXK_HOME:
-            self._seek_to(0); return
+            self._seek_to(0)
+            return
         if key == wx.WXK_END:
-            self._seek_to(self.duration_ms); return
+            self._seek_to(self.duration_ms)
+            return
 
         event.Skip()

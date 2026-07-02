@@ -405,7 +405,7 @@ class ConversionTask:
         except subprocess.TimeoutExpired:
             self.process.kill()
             self.process.communicate()
-            raise Exception("FFmpeg image conversion timed out after 120 seconds")
+            raise Exception("FFmpeg image conversion timed out after 120 seconds") from None
 
         if stderr_output:
             for line in stderr_output.strip().splitlines()[-50:]:
@@ -634,7 +634,8 @@ class ConversionTask:
                 raise Exception("Stopped by user")
 
             line = self.process.stderr.readline()
-            if not line and self.process.poll() is not None: break
+            if not line and self.process.poll() is not None:
+                break
 
             if line:
                 stripped = line.strip()

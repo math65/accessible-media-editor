@@ -670,7 +670,10 @@ class SettingsDialog(wx.Dialog):
             choices.append(self._build_crf_choice_label(custom_value, custom=True))
 
         self.combo_crf.Set(choices)
-        selected_value = value if value in self.video_crf_values else DEFAULT_FORMAT_SETTINGS[self.format_key]["video_crf"]
+        selected_value = (
+            value if value in self.video_crf_values
+            else DEFAULT_FORMAT_SETTINGS[self.format_key]["video_crf"]
+        )
         self.combo_crf.SetSelection(self.video_crf_values.index(selected_value))
 
     def _refresh_video_preset_choices(self, selected_key):

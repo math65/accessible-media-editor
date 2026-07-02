@@ -347,7 +347,8 @@ def normalize_format_settings(format_key, settings):
         normalized.update(settings)
     if format_key in IMAGE_OUTPUT_FORMAT_KEYS:
         if format_key in ("jpeg", "webp"):
-            normalized["image_quality"] = max(1, min(100, int(normalized.get("image_quality", 85 if format_key == "jpeg" else 80))))
+            default_quality = 85 if format_key == "jpeg" else 80
+            normalized["image_quality"] = max(1, min(100, int(normalized.get("image_quality", default_quality))))
         if format_key == "png":
             normalized["image_compression"] = max(0, min(9, int(normalized.get("image_compression", 6))))
         if format_key == "webp":

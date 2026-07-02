@@ -145,9 +145,13 @@ def normalize_track_settings(track_settings, meta=None):
             continue
 
         if _looks_like_legacy_entries(provided_entries):
-            normalized[config_key] = _normalize_legacy_entries(track_type, provided_entries, normalized.get(config_key, []))
+            normalized[config_key] = _normalize_legacy_entries(
+                track_type, provided_entries, normalized.get(config_key, [])
+            )
         else:
-            normalized[config_key] = _normalize_new_entries(track_type, provided_entries, normalized.get(config_key, []))
+            normalized[config_key] = _normalize_new_entries(
+                track_type, provided_entries, normalized.get(config_key, [])
+            )
 
         normalized[config_key] = _ensure_default_exclusive(normalized[config_key])
 

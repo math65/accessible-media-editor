@@ -10,7 +10,7 @@ def setup_logger():
         root_logger.removeHandler(handler)
         try:
             handler.close()
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
 
     logging.basicConfig(

@@ -88,7 +88,7 @@ class EditorHost:
         self.settings_store = build_default_settings_store()
         try:
             self.settings_store.update(load_raw_config() or {})
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
         self.prober = FileProber()
         self.editor = None
@@ -97,7 +97,7 @@ class EditorHost:
     def _save_config(self):
         try:
             save_raw_config(self.settings_store)
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
 
     # ------------------------------------------------------------- open a file

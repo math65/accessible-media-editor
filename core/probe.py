@@ -37,8 +37,10 @@ class MediaTrack:
 
     def get_summary(self):
         parts = [self.codec_name.upper()]
-        if self.language and self.language != 'und': parts.append(self.language.upper())
-        if self.title: parts.append(f"\"{self.title}\"")
+        if self.language and self.language != 'und':
+            parts.append(self.language.upper())
+        if self.title:
+            parts.append(f"\"{self.title}\"")
         return " - ".join(parts)
 
 class MediaMetadata:
@@ -122,18 +124,22 @@ class MediaMetadata:
         if self.video_tracks:
             v = self.video_tracks[0]
             v_info = f"{v.codec_name.upper()}"
-            if self.width and self.height: v_info += f" ({self.width}x{self.height})"
+            if self.width and self.height:
+                v_info += f" ({self.width}x{self.height})"
 
         a_info = ""
         count_a = len(self.audio_tracks)
         if count_a > 0:
             a = self.audio_tracks[0]
-            if count_a > 1: a_info = _translatef("{count}x Audio", count=count_a)
-            else: a_info = a.codec_name.upper()
+            if count_a > 1:
+                a_info = _translatef("{count}x Audio", count=count_a)
+            else:
+                a_info = a.codec_name.upper()
 
         s_info = ""
         count_s = len(self.subtitle_tracks)
-        if count_s > 0: s_info = _translatef("{count}x Subtitles", count=count_s)
+        if count_s > 0:
+            s_info = _translatef("{count}x Subtitles", count=count_s)
 
         parts = [x for x in [v_info, a_info, s_info] if x]
         return " / ".join(parts)

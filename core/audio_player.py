@@ -105,7 +105,7 @@ class AudioPlayer:
             thread.join(timeout=2.0)
         try:
             atexit.unregister(self.shutdown)
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
 
     # ------------------------------------------------------------------ interne
@@ -159,11 +159,11 @@ class AudioPlayer:
         finally:
             try:
                 stream.stop()
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass
             try:
                 stream.close()
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass
 
     def _run_request(self, stream, req, gen):
@@ -211,7 +211,7 @@ class AudioPlayer:
                 # Laisse le tampon se vider avant la fin, puis position finale.
                 try:
                     time.sleep(float(getattr(stream, 'latency', 0.0)) + 0.05)
-                except Exception:
+                except Exception:  # noqa: BLE001
                     pass
                 if on_position is not None:
                     on_position(int(start_ms + bytes_written / BYTES_PER_MS))
@@ -221,7 +221,7 @@ class AudioPlayer:
             if process is not None and process.poll() is None:
                 try:
                     process.kill()
-                except Exception:
+                except Exception:  # noqa: BLE001
                     pass
 
         if completed and req['on_finished'] is not None:

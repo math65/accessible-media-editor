@@ -35,7 +35,7 @@ def load_raw_config():
             data = json.load(handle)
         if isinstance(data, dict):
             return data
-    except Exception:
+    except Exception:  # noqa: BLE001
         return {}
     return {}
 

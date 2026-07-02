@@ -348,7 +348,7 @@ class BatchConversionManager:
                     job = active_futures.pop(future)
                     try:
                         result_state = future.result()
-                    except Exception as exc:
+                    except Exception as exc:  # noqa: BLE001
                         job.error_message = str(exc)
                         self._set_job_state(job, JOB_STATE_ERROR, error_message=str(exc))
                         result_state = JOB_STATE_ERROR
@@ -390,7 +390,7 @@ class BatchConversionManager:
                 progress_callback=lambda pct: self._update_job_progress(job.index, pct),
                 stop_check_callback=self._stop_requested.is_set,
             )
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             job.ffmpeg_command = list(task.last_command) if task.last_command else []
             job.ffmpeg_stderr = "\n".join(task.stderr_lines[-50:]) if task.stderr_lines else ""
 
