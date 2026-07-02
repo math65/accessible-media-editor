@@ -125,13 +125,15 @@ without them and PyInstaller bundles them from `bin/`.
 - Speech feedback via `core/speech.speak(..., interrupt=True)` (accessible_output2, no screen-reader
   dependency).
 
-## Identity / not-yet-created external resources
+## Identity / external resources
 
 - App id / config dir: `%APPDATA%\AccessibleMediaEditor` (`core/debug_session.py`).
 - Installer `AppId` GUID: `{8EF4AA32-F74A-45FD-85C6-1E6DDC6D42AE}` (fresh, distinct from AMC).
-- GitHub repo `math65/accessible-media-editor` and any support/announce backend app-id: **not created
-  yet**. `core/app_info.py` points at them optimistically; do not wire the updater/support until they
-  exist.
+- GitHub repo **exists and is public**: `math65/accessible-media-editor` (default branch `master`).
+  `core/app_info.py` already points at it (`APP_GITHUB_OWNER`/`APP_GITHUB_REPOSITORY`), so the
+  updater/support/announce URLs resolve — but there are **no releases yet** and the support/announce
+  **backend app-id still does not exist**, so do not wire/enable the updater or support flows until a
+  release is published and a backend is set up.
 
 ## Relationship to Accessible Media Converter
 
