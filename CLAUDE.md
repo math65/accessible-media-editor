@@ -138,8 +138,8 @@ without them and PyInstaller bundles them from `bin/`.
 **AME is intended to eventually replace AMC's integrated cutter** (Mathieu's decision, 2026-07-02).
 The transition is deferred, not immediate:
 
-- **For now, do not touch AMC.** Its integrated cutter ships as beta `v1.20.0-rc1` and Sèb (blind
-  tester) is validating it. Removing it before AME is mature would strand testers. Nothing in this
+- **For now, do not touch AMC.** Its integrated cutter ships as beta `v1.20.0-rc1` and a blind beta
+  tester is validating it. Removing it before AME is mature would strand testers. Nothing in this
   repo modifies AMC.
 - **When AME is mature enough** to cover the cutter's use cases (remove ads, split), deprecate and
   remove the cutter from AMC, and point AMC users to AME.
