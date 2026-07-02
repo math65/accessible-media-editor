@@ -6,12 +6,8 @@ Set-StrictMode -Version Latest
 
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
 $PythonExe = Join-Path $ProjectRoot ".venv\Scripts\python.exe"
-$SpecPath = Join-Path $ProjectRoot "UniversalTranscoder.spec"
-$InstallerScript = Join-Path $ProjectRoot "installer\UniversalTranscoder.iss"
-$DocumentationIndexes = @(
-    (Join-Path $ProjectRoot "docs\fr\index.html"),
-    (Join-Path $ProjectRoot "docs\en\index.html")
-)
+$SpecPath = Join-Path $ProjectRoot "AccessibleMediaEditor.spec"
+$InstallerScript = Join-Path $ProjectRoot "installer\AccessibleMediaEditor.iss"
 $BuildDir = Join-Path $ProjectRoot "build"
 $DistDir = Join-Path $ProjectRoot "dist"
 $VersionInfoPath = Join-Path $BuildDir "windows_version_info.txt"
@@ -67,9 +63,6 @@ function Get-IsccPath {
 Assert-FileExists -Path $PythonExe -Label "Python executable"
 Assert-FileExists -Path $SpecPath -Label "PyInstaller spec"
 Assert-FileExists -Path $InstallerScript -Label "Inno Setup script"
-foreach ($documentationIndex in $DocumentationIndexes) {
-    Assert-FileExists -Path $documentationIndex -Label "Documentation index"
-}
 Assert-FileExists -Path (Join-Path $ProjectRoot "bin\ffmpeg.exe") -Label "FFmpeg binary"
 Assert-FileExists -Path (Join-Path $ProjectRoot "bin\ffprobe.exe") -Label "FFprobe binary"
 
@@ -182,7 +175,7 @@ print(output_path)
 "@
     Invoke-PythonInline -Script $versionInfoScript -ErrorMessage "Unable to generate the Windows version resource."
 
-    $env:UT_VERSION_FILE = $VersionInfoPath
+    $env:AME_VERSION_FILE = $VersionInfoPath
     try {
         Write-Host "Building application executable with PyInstaller..."
         & $PythonExe -m PyInstaller --clean --noconfirm $SpecPath
@@ -191,7 +184,7 @@ print(output_path)
         }
     }
     finally {
-        Remove-Item Env:UT_VERSION_FILE -ErrorAction SilentlyContinue
+        Remove-Item Env:AME_VERSION_FILE -ErrorAction SilentlyContinue
     }
 
     Assert-FileExists -Path $distAppDir -Label "Built application folder"
@@ -234,14 +227,14 @@ print(output_path)
         $notesFr = Get-Content -LiteralPath $notesFrPath -Raw -Encoding UTF8
         $combined = @"
 ## English
-<!-- AMC-RELEASE-NOTES:en:start -->
+<!-- AME-RELEASE-NOTES:en:start -->
 $($notesEn.Trim())
-<!-- AMC-RELEASE-NOTES:en:end -->
+<!-- AME-RELEASE-NOTES:en:end -->
 
 ## Fran$([char]231)ais
-<!-- AMC-RELEASE-NOTES:fr:start -->
+<!-- AME-RELEASE-NOTES:fr:start -->
 $($notesFr.Trim())
-<!-- AMC-RELEASE-NOTES:fr:end -->
+<!-- AME-RELEASE-NOTES:fr:end -->
 "@
         [System.IO.File]::WriteAllText($notesCombinedPath, $combined, [System.Text.UTF8Encoding]::new($false))
         Write-Host "Combined release notes written: $notesCombinedPath"

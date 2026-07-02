@@ -24,7 +24,7 @@ ENV/
 build/
 dist/
 *.spec
-!UniversalTranscoder.spec
+!AccessibleMediaEditor.spec
 
 # ------------------------------------------------
 # IDE / Editor Settings
@@ -34,7 +34,7 @@ dist/
 *.swp
 
 # ------------------------------------------------
-# Universal Transcoder Specifics
+# Accessible Media Editor Specifics
 # ------------------------------------------------
 # 1. User Configuration
 # We ignore this so your personal settings don't go to Git
@@ -54,7 +54,6 @@ bin/ffprobe.exe
 # 3. Compiled Translations
 # We track the human-readable .po files, but ignore the compiled .mo binary files
 locales/**/*.mo
-server/support-report/storage/ratelimit/*.json
 
 # 4. Test Output / Media Files
 # Ignore media files you might use for testing to keep repo light

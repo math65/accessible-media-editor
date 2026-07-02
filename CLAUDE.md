@@ -32,14 +32,16 @@ uv run main.py     # run from source (opens a file picker, then the editor)
 
 `main.py` also accepts a file path argument (for a future "Open with…" Explorer verb).
 
-**Packaging (not yet finished — TODO).** The seed carries AMC's build tooling renamed:
+**Packaging (rewired, not yet validated end-to-end).** The seed carries AMC's build tooling renamed:
 `AccessibleMediaEditor.spec`, `scripts/build_release.ps1`, `scripts/update_embedded_ffmpeg.ps1`,
-`installer/AccessibleMediaEditor.iss`. The `.spec` and `.iss` were updated for the new identity,
-but **`scripts/build_release.ps1` still references the old AMC spec/dist/installer names** (and
-expects `docs/{en,fr}/index.html`, which don't exist) and must be rewired before a real release
-build. The `.gitignore` also still carries AMC identity (a broad `*.spec` ignore with a stale
-`!UniversalTranscoder.spec` un-ignore, plus a `Universal Transcoder` section) — clean it in the same
-de-AMC pass. The updater/support/announce backends are **not wired** in
+`installer/AccessibleMediaEditor.iss`. `build_release.ps1` now points at the AME spec/installer, the
+version-resource env var is `AME_VERSION_FILE` (also read in the `.spec`), the dead `docs/{en,fr}/index.html`
+assertion is gone, and the release-notes markers are `AME-RELEASE-NOTES`. The `.gitignore` was de-AMC'd
+too. **Still not run through an actual PyInstaller + Inno Setup build**, so treat a real release as
+unproven until someone runs it. Two known leftovers: (1) `installer/AccessibleMediaEditor.iss` still
+implements AMC's **"Convert with Accessible Media Converter"** Explorer verb (context-menu label +
+`AccessibleMediaConverter` registry subkeys) — a product decision for AME (an *editor*, likely "Edit
+with…"), left untouched on purpose. (2) The updater/support/announce backends are **not wired** in
 `main.py` yet (no GitHub repo / backend app-id exists for AME — see below).
 
 **Translations** (English source, French shipped):
