@@ -129,6 +129,7 @@ class SegmentEditorFrame(wx.Frame):
         self._silences = []          # liste (start_ms, end_ms)
         self._silence_points = []    # milieux des silences (repères de navigation)
         self._silence_ready = False  # détection terminée ?
+        self._silence_started = False  # détection lancée ? (manuelle, pas au démarrage)
         self._closed = False
         self._montage_queue = []     # régions gardées restant à jouer (mode montage)
         self._skip_discarded = False # mode montage : la lecture saute les parties jetées
@@ -143,7 +144,9 @@ class SegmentEditorFrame(wx.Frame):
         self._build_ui()
         self._refresh_segment_list(select_index=0)
         self._update_status()
-        self._start_silence_detection()
+        # La détection de silences n'est PLUS lancée au démarrage : inutile (et longue)
+        # sur une grande vidéo. L'utilisateur la déclenche via Navigation → « Détecter
+        # les silences », ou à la demande en utilisant Alt+←/→.
 
         # L'éditeur est une fenêtre indépendante : il ne bloque PAS la fenêtre
         # principale, pour pouvoir lancer un export (progression côté fenêtre
@@ -216,6 +219,7 @@ class SegmentEditorFrame(wx.Frame):
         self._append(m_nav, _("Go to end") + "  (End)", lambda e: self._seek_to(self.duration_ms))
         self._append(m_nav, _("Go to position...") + "\tCtrl+G", lambda e: self._do_goto())
         m_nav.AppendSeparator()
+        self._append(m_nav, _("Detect silences"), lambda e: self._start_silence_detection())
         self._append(m_nav, _("Previous silence") + "  (Alt+Left)", lambda e: self._go_silence(-1))
         self._append(m_nav, _("Next silence") + "  (Alt+Right)", lambda e: self._go_silence(+1))
         m_nav.AppendSeparator()
@@ -939,6 +943,15 @@ class SegmentEditorFrame(wx.Frame):
 
     # ---------------------------------------------------------------- silences
     def _start_silence_detection(self):
+        # Idempotent : si déjà lancée, on renseigne juste l'état (prête ou en cours).
+        if self._silence_started:
+            if self._silence_ready:
+                speak(_("Silence detection ready: {n} found").format(n=len(self._silence_points)))
+            else:
+                speak(_("Detecting silences, please wait"))
+            return
+        self._silence_started = True
+        speak(_("Detecting silences..."))
         path = self.meta.full_path
         ffmpeg_exe = get_ffmpeg_path()
 
@@ -962,7 +975,10 @@ class SegmentEditorFrame(wx.Frame):
 
     def _go_silence(self, direction):
         if not self._silence_ready:
-            speak(_("Detecting silences, please wait"))
+            if not self._silence_started:
+                self._start_silence_detection()  # démarre à la demande (annonce déjà)
+            else:
+                speak(_("Detecting silences, please wait"))
             return
         if not self._silence_points:
             speak(_("No silence detected"))
