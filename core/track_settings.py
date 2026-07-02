@@ -1,6 +1,5 @@
 import copy
 
-
 TRACK_TYPE_CONFIG_KEYS = {
     "video": "video_tracks",
     "audio": "audio_tracks",

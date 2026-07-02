@@ -11,7 +11,6 @@ import logging
 import re
 import subprocess
 
-
 _START_RE = re.compile(r'silence_start:\s*(-?\d+(?:\.\d+)?)')
 _END_RE = re.compile(r'silence_end:\s*(-?\d+(?:\.\d+)?)')
 

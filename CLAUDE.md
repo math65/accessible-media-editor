@@ -35,8 +35,11 @@ uv run main.py     # run from source (opens a file picker, then the editor)
 **Packaging (not yet finished — TODO).** The seed carries AMC's build tooling renamed:
 `AccessibleMediaEditor.spec`, `scripts/build_release.ps1`, `scripts/update_embedded_ffmpeg.ps1`,
 `installer/AccessibleMediaEditor.iss`. The `.spec` and `.iss` were updated for the new identity,
-but **`scripts/build_release.ps1` still references the old AMC spec/dist/installer names** and must
-be rewired before a real release build. The updater/support/announce backends are **not wired** in
+but **`scripts/build_release.ps1` still references the old AMC spec/dist/installer names** (and
+expects `docs/{en,fr}/index.html`, which don't exist) and must be rewired before a real release
+build. The `.gitignore` also still carries AMC identity (a broad `*.spec` ignore with a stale
+`!UniversalTranscoder.spec` un-ignore, plus a `Universal Transcoder` section) — clean it in the same
+de-AMC pass. The updater/support/announce backends are **not wired** in
 `main.py` yet (no GitHub repo / backend app-id exists for AME — see below).
 
 **Translations** (English source, French shipped):
@@ -60,7 +63,7 @@ Two layers, mirroring AMC:
   `settings_store` (defaults + `%APPDATA%\AccessibleMediaEditor\config.json`), opens files
   (`FileProber.analyze` → `MediaMetadata` → `SegmentEditorFrame`), and provides the two export
   callbacks the editor calls: `choose_settings(parent, meta)` (format `SingleChoiceDialog` +
-  `SettingsDialog`) and `run_export(meta, plan, mode, fmt_key, settings)` — one re-joined file
+  `SettingsDialog` from `ui/settings_dialog.py`) and `run_export(meta, plan, mode, fmt_key, settings)` — one re-joined file
   (`SegmentExportTask`) or N separate files (`BatchConversionManager` with the plan frozen onto
   `meta.segment_plan`). Both run on a daemon thread behind a modal `_ExportProgress` bar.
 - **`ui/segment_editor.py`** — `SegmentEditorFrame(wx.Frame)`: the editor itself (menu bar, central
@@ -83,6 +86,9 @@ Two layers, mirroring AMC:
     `ConversionTask(clip=...)` cuts each kept region via `-ss`/`-t`).
   - `i18n.py`, `speech.py`, `logger.py`, `debug_session.py`, `single_instance.py`, `app_info.py`
     — accessible-app scaffolding (gettext, screen-reader speech, config in `%APPDATA%`, version).
+  - `episode_parse.py`, `metadata_edit.py` — **dormant AMC carryover** (filename SxxExx parsing +
+    file-tag/cover-art field maps). Not wired into the cutter loop, and `metadata_edit.py` still
+    imports a `metadata_retag.py` that wasn't carried over. Leave alone until the editor grows tagging.
 
 `bin/ffmpeg.exe` and `bin/ffprobe.exe` are **git-tracked** (~100 MB each) — the app is useless
 without them and PyInstaller bundles them from `bin/`.

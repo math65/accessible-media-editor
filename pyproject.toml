@@ -16,12 +16,33 @@ dependencies = [
 # Build / tooling dependencies, not shipped at runtime.
 #   pyinstaller -> packages the .exe (scripts/build_release.ps1)
 #   polib       -> compiles .po -> .mo translations (core/i18n.py, scripts/manage_i18n.py)
+#   ruff        -> lint (uv run ruff check .)
+#   pytest      -> tests over the pure core modules (uv run pytest)
 dev = [
     "pyinstaller>=6.19",
     "polib>=1.2",
+    "ruff>=0.6",
+    "pytest>=8.0",
 ]
 
 [tool.uv]
 # Keep the project virtual environment at .venv so existing tooling
 # (scripts/build_release.ps1, the .venv\Scripts\python.exe convention) keeps working.
 package = false
+
+[tool.ruff]
+# target-version is inferred from project.requires-python (>=3.14).
+line-length = 120
+# gettext installs `_` into builtins at runtime; declaring it avoids ~290 false F821s.
+builtins = ["_"]
+
+[tool.ruff.lint]
+# E/W pycodestyle, F pyflakes, I isort, UP pyupgrade, B bugbear, BLE flake8-blind-except.
+# BLE is deliberately on: main.py already carries `# noqa: BLE001` on an intentional
+# broad `except` — keep that guard meaningful so new blind excepts are flagged.
+select = ["E", "W", "F", "I", "UP", "B", "BLE"]
+
+[tool.pytest.ini_options]
+# pythonpath="." so `from core... import` resolves with the un-installed (package=false) layout.
+testpaths = ["tests"]
+pythonpath = ["."]

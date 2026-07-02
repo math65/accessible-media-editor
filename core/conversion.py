@@ -1,8 +1,8 @@
-import os
-import subprocess
-import re
-import logging
 import builtins
+import logging
+import os
+import re
+import subprocess
 
 from core.ffmpeg_helpers import (
     COVER_ART_AUDIO_OUTPUTS,
@@ -618,7 +618,7 @@ class ConversionTask:
 
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        
+
         self.process = subprocess.Popen(
             cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE,
             universal_newlines=True, encoding='utf-8', errors='ignore',
@@ -635,7 +635,7 @@ class ConversionTask:
 
             line = self.process.stderr.readline()
             if not line and self.process.poll() is not None: break
-            
+
             if line:
                 stripped = line.strip()
                 logging.debug(f"FFmpeg output: {stripped}")

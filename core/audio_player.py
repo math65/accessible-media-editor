@@ -32,7 +32,6 @@ import time
 
 from core.ffmpeg_helpers import get_ffmpeg_path
 
-
 SAMPLE_RATE = 44100
 CHANNELS = 2
 BYTES_PER_SAMPLE = 2  # s16le

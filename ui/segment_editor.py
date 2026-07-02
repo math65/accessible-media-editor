@@ -30,12 +30,11 @@ import threading
 
 import wx
 
-from core.speech import speak
 from core import segments as segmods
 from core.audio_player import AudioPlayer
 from core.ffmpeg_helpers import get_ffmpeg_path
 from core.silence import detect_silences, silence_points
-
+from core.speech import speak
 
 # Pas de déplacement proposés (libellé, millisecondes).
 _STEP_CHOICES = [
@@ -709,7 +708,7 @@ class SegmentEditorFrame(wx.Frame):
                 return
             path = dlg.GetPath()
         try:
-            with open(path, 'r', encoding='utf-8') as handle:
+            with open(path, encoding='utf-8') as handle:
                 data = json.load(handle)
         except (OSError, ValueError) as exc:
             wx.MessageBox(_("Could not open the project.") + f"\n{exc}",

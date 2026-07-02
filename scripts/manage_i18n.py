@@ -4,7 +4,6 @@ from pathlib import Path
 
 import polib
 
-
 TRANSLATION_FUNCTION_NAMES = {"_", "_translate", "_translatef", "N_"}
 EXCLUDED_PATH_PARTS = {".git", ".venv", "build", "dist", "__pycache__"}
 SOURCE_ROOTS = ("main.py", "core", "ui")

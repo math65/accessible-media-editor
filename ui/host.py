@@ -23,11 +23,10 @@ from core.formatting import (
     build_format_label,
 )
 from core.probe import FileProber
-from core.segments import kept_regions
 from core.segment_export import SegmentExportTask
+from core.segments import kept_regions
 from ui.segment_editor import EXPORT_MODE_SEPARATE, SegmentEditorFrame
 from ui.settings_dialog import SettingsDialog
-
 
 # Extensions média acceptées à l'ouverture (audio + vidéo temporels ; pas d'images).
 _MEDIA_WILDCARD = (

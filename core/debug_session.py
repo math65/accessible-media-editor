@@ -1,7 +1,6 @@
 import json
 import os
 
-
 APP_DIR_NAME = "AccessibleMediaEditor"
 
 
@@ -32,7 +31,7 @@ def load_raw_config():
         return {}
 
     try:
-        with open(config_path, "r", encoding="utf-8") as handle:
+        with open(config_path, encoding="utf-8") as handle:
             data = json.load(handle)
         if isinstance(data, dict):
             return data

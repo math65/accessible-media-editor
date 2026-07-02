@@ -16,7 +16,6 @@ from core.formatting import (
     get_matching_video_preset_profile,
 )
 
-
 VIDEO_CRF_PRESET_OPTIONS = (
     (16, "Very High Quality"),
     (18, "High Quality"),

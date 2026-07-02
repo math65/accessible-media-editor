@@ -3,7 +3,6 @@ import os
 
 from core.i18n import AUTO_LANGUAGE_CODE, normalize_ui_language
 
-
 AUDIO_OUTPUT_FORMAT_KEYS = ("mp3", "aac", "m4b", "wav", "flac", "alac", "ogg", "wma")
 # Modes de nommage des chapitres générés pour un M4B (fusion).
 M4B_CHAPTER_NAMING_MODES = ("title_or_number", "title_or_filename", "numbered")

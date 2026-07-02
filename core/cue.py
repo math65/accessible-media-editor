@@ -28,7 +28,7 @@ class CueTrack:
     title: str = ""
     performer: str = ""
     start_ms: int = 0
-    end_ms: "int | None" = None
+    end_ms: int | None = None
 
 
 @dataclass
@@ -37,7 +37,7 @@ class CueSheet:
     album_performer: str = ""
     genre: str = ""
     date: str = ""
-    audio_ref: "str | None" = None
+    audio_ref: str | None = None
     tracks: list = field(default_factory=list)
     multi_file: bool = False
 
@@ -152,7 +152,7 @@ def finalize_tracks(tracks, total_ms):
 def _read_text(path):
     for encoding in ('utf-8-sig', 'cp1252', 'latin-1'):
         try:
-            with open(path, 'r', encoding=encoding) as handle:
+            with open(path, encoding=encoding) as handle:
                 return handle.read()
         except UnicodeDecodeError:
             continue

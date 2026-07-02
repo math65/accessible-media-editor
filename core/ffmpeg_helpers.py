@@ -4,7 +4,6 @@ import logging
 import os
 import sys
 
-
 STREAMING_LOUDNORM_FILTER = "loudnorm=I=-16:TP=-1:LRA=7"
 
 VIDEO_CONTAINER_OUTPUTS = ('mp4', 'mkv', 'mov')
