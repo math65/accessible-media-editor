@@ -4,6 +4,12 @@
 .claude/settings.local.json
 
 # ------------------------------------------------
+# Local secrets (support/announce backend bearer) — never commit.
+# Copy core/_secrets.example.py -> core/_secrets.py and fill the value.
+# ------------------------------------------------
+core/_secrets.py
+
+# ------------------------------------------------
 # Python / Virtual Environment
 # ------------------------------------------------
 # Compiled bytecode
