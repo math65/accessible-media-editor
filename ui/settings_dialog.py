@@ -98,7 +98,7 @@ class SettingsDialog(wx.Dialog):
 
         row_mode = wx.BoxSizer(wx.HORIZONTAL)
         self.rb_convert = wx.RadioButton(self, label=_("Re-encode (Recommended)"), style=wx.RB_GROUP)
-        self.rb_copy = wx.RadioButton(self, label=_("Copy Stream (Advanced)"))
+        self.rb_copy = wx.RadioButton(self, label=_("Copy without re-encoding (fast, lossless)"))
         row_mode.Add(self.rb_convert, 0, wx.RIGHT, 15)
         row_mode.Add(self.rb_copy, 0)
         audio_sizer.Add(row_mode, 0, wx.ALL, 5)
@@ -201,7 +201,7 @@ class SettingsDialog(wx.Dialog):
 
         row_vmode = wx.BoxSizer(wx.HORIZONTAL)
         self.rb_v_convert = wx.RadioButton(self, label=_("Re-encode (Recommended)"), style=wx.RB_GROUP)
-        self.rb_v_copy = wx.RadioButton(self, label=_("Copy Stream (Advanced)"))
+        self.rb_v_copy = wx.RadioButton(self, label=_("Copy without re-encoding (fast, lossless)"))
         row_vmode.Add(self.rb_v_convert, 0, wx.RIGHT, 15)
         row_vmode.Add(self.rb_v_copy, 0)
         video_sizer.Add(row_vmode, 0, wx.ALL, 5)

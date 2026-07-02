@@ -55,13 +55,17 @@ from ui.update_dialog import UpdateDialog
 
 # Pas de déplacement proposés (libellé, millisecondes).
 _STEP_CHOICES = [
+    (lambda: _("1 ms"), 1),
     (lambda: _("10 ms"), 10),
     (lambda: _("100 ms"), 100),
     (lambda: _("1 second"), 1000),
     (lambda: _("10 seconds"), 10000),
     (lambda: _("1 minute"), 60000),
+    (lambda: _("2 minutes"), 120000),
+    (lambda: _("5 minutes"), 300000),
+    (lambda: _("10 minutes"), 600000),
 ]
-_DEFAULT_STEP_INDEX = 2  # 1 seconde
+_DEFAULT_STEP_INDEX = 3  # 1 seconde
 
 EXPORT_MODE_ONE_FILE = "one_file"
 EXPORT_MODE_SEPARATE = "separate"
@@ -213,8 +217,8 @@ class SegmentEditorFrame(wx.Frame):
         m_nav = wx.Menu()
         self._append(m_nav, _("Backward") + "  (Left)", lambda e: self._seek_to(self.position_ms - self.step_ms))
         self._append(m_nav, _("Forward") + "  (Right)", lambda e: self._seek_to(self.position_ms + self.step_ms))
-        self._append(m_nav, _("Previous cut") + "  (Ctrl+Left)", lambda e: self._seek_to(self._prev_boundary()))
-        self._append(m_nav, _("Next cut") + "  (Ctrl+Right)", lambda e: self._seek_to(self._next_boundary()))
+        self._append(m_nav, _("Previous segment") + "  (Ctrl+Left)", lambda e: self._go_segment(-1))
+        self._append(m_nav, _("Next segment") + "  (Ctrl+Right)", lambda e: self._go_segment(+1))
         self._append(m_nav, _("Go to start") + "  (Home)", lambda e: self._seek_to(0))
         self._append(m_nav, _("Go to end") + "  (End)", lambda e: self._seek_to(self.duration_ms))
         self._append(m_nav, _("Go to position...") + "\tCtrl+G", lambda e: self._do_goto())
@@ -541,13 +545,13 @@ class SegmentEditorFrame(wx.Frame):
     def _show_shortcuts(self):
         text = _(
             "Keyboard shortcuts:\n\n"
-            "Up / Down: select a segment\n"
+            "Up / Down: change the step (coarser / finer)\n"
             "Left / Right: move by the step\n"
-            "Ctrl+Left / Ctrl+Right: previous / next cut\n"
+            "Ctrl+Left / Ctrl+Right: previous / next segment (selects it)\n"
             "Alt+Left / Alt+Right: previous / next silence\n"
             "Page Up / Page Down: back / forward by one minute\n"
             "Home / End: start / end\n"
-            "+ / - (or Ctrl+Up / Ctrl+Down): coarser / finer step\n"
+            "+ / -: coarser / finer step\n"
             "Space: Play / Stop (Stop returns to the start point)\n"
             "Ctrl+Space: Pause / Resume\n"
             "P: announce the current position\n"
@@ -666,6 +670,19 @@ class SegmentEditorFrame(wx.Frame):
             speak(_("No segment selected"))
             return
         self._seek_to(self.plan.segments[index].start_ms)
+
+    def _go_segment(self, direction):
+        """Segment précédent/suivant (Ctrl+Gauche/Droite) : sélectionne le segment dans
+        la liste — la source de vérité pour K, fusion, déplacer début/fin — et place le
+        curseur d'écoute à son début (l'annonce vocale suit via _seek_to)."""
+        if not self.plan.segments:
+            return
+        cur = self._selected_index()
+        if cur < 0:
+            cur = self._segment_index_at(self.position_ms)
+        new_index = max(0, min(cur + direction, len(self.plan.segments) - 1))
+        self._select_row(new_index)
+        self._seek_to(self.plan.segments[new_index].start_ms)
 
     def _set_selected_boundary(self, start):
         """Caler le début (start=True) ou la fin (start=False) du segment
@@ -1187,12 +1204,13 @@ class SegmentEditorFrame(wx.Frame):
             self._toggle_play()
             return
 
-        # Changer le pas : Ctrl+Haut/Bas ou +/- (pavé numérique inclus). Haut/+ =
-        # pas plus grand ; Bas/- = pas plus fin. (Haut/Bas seuls restent à la liste.)
-        if ctrl and key == wx.WXK_UP:
+        # Changer le pas : Haut/Bas (ou +/-, pavé numérique inclus). Haut/+ = pas plus
+        # grand ; Bas/- = pas plus fin. On intercepte Haut/Bas AVANT la liste (qui, sinon,
+        # bougerait sa sélection) — le segment se choisit désormais avec Ctrl+Gauche/Droite.
+        if not ctrl and key == wx.WXK_UP:
             self._change_step(+1)
             return
-        if ctrl and key == wx.WXK_DOWN:
+        if not ctrl and key == wx.WXK_DOWN:
             self._change_step(-1)
             return
         if key in (wx.WXK_NUMPAD_ADD, ord('+')):
@@ -1232,14 +1250,19 @@ class SegmentEditorFrame(wx.Frame):
             self._remove_selected_boundary()
             return
 
-        # Navigation temporelle (Haut/Bas restent à la liste pour choisir un segment).
+        # Ctrl+Gauche/Droite = segment précédent/suivant (sélectionne le segment et
+        # place le curseur à son début). Gauche/Droite seuls = déplacer du pas courant.
+        if ctrl and key == wx.WXK_LEFT:
+            self._go_segment(-1)
+            return
+        if ctrl and key == wx.WXK_RIGHT:
+            self._go_segment(+1)
+            return
         if key == wx.WXK_LEFT:
-            self._seek_to(self._prev_boundary() if event.ControlDown()
-                          else self.position_ms - self.step_ms)
+            self._seek_to(self.position_ms - self.step_ms)
             return
         if key == wx.WXK_RIGHT:
-            self._seek_to(self._next_boundary() if event.ControlDown()
-                          else self.position_ms + self.step_ms)
+            self._seek_to(self.position_ms + self.step_ms)
             return
         if key == wx.WXK_HOME:
             self._seek_to(0)
