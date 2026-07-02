@@ -117,7 +117,7 @@ class SegmentEditorFrame(wx.Frame):
         self.position_ms = 0
         self.step_ms = _STEP_CHOICES[_DEFAULT_STEP_INDEX][1]
         self._region_start_ms = None
-        self._scrub_enabled = False
+        self._scrub_enabled = True  # aperçu audio au déplacement, actif par défaut
         # Options d'annonces vocales (mémorisées dans settings_store).
         self._opt_announce_transport = bool(self._settings.get('cutter_announce_transport', True))
         self._opt_announce_position = bool(self._settings.get('cutter_announce_position', True))
@@ -190,6 +190,7 @@ class SegmentEditorFrame(wx.Frame):
         self._append(m_play, _("Verify the cut (real export join)") + "  (V)", lambda e: self._verify_cut())
         m_play.AppendSeparator()
         self.item_scrub = m_play.AppendCheckItem(wx.ID_ANY, _("Scrub on move (audio preview)"))
+        self.item_scrub.Check(self._scrub_enabled)
         self.Bind(wx.EVT_MENU, self.on_scrub_toggle, self.item_scrub)
 
         # Choix de la piste audio écoutée à l'aperçu (vidéos multipistes : VO/VF,
@@ -238,7 +239,7 @@ class SegmentEditorFrame(wx.Frame):
         m_edit.AppendSeparator()
         self._append(m_edit, _("Mark region start") + "  (S)", lambda e: self._mark_start())
         self._append(m_edit, _("Mark region end") + "  (E)", lambda e: self._mark_end())
-        self._append(m_edit, _("Add a cut here") + "  (X)", lambda e: self._cut_here())
+        self._append(m_edit, _("Divide here") + "  (X)", lambda e: self._cut_here())
         self._append(m_edit, _("Keep / Discard segment") + "  (K)", lambda e: self._toggle_selected_keep())
         self._append(m_edit, _("Merge with next segment (remove cut)") + "  (Del)",
                      lambda e: self._remove_selected_boundary())
@@ -346,8 +347,13 @@ class SegmentEditorFrame(wx.Frame):
         return _DEFAULT_STEP_INDEX
 
     def _announce_position(self):
+        # Annonce automatique lors des déplacements (dépend de l'option).
         if not self._opt_announce_position:
             return
+        self._speak_position()
+
+    def _speak_position(self):
+        """Annonce inconditionnelle du timecode + segment courant (raccourci dédié)."""
         seg_index = self._segment_index_at(self.position_ms)
         if self.plan.segments:
             seg = self.plan.segments[seg_index]
@@ -535,22 +541,43 @@ class SegmentEditorFrame(wx.Frame):
             "Left / Right: move by the step\n"
             "Ctrl+Left / Ctrl+Right: previous / next cut\n"
             "Alt+Left / Alt+Right: previous / next silence\n"
+            "Page Up / Page Down: back / forward by one minute\n"
             "Home / End: start / end\n"
             "+ / - (or Ctrl+Up / Ctrl+Down): coarser / finer step\n"
             "Space: Play / Stop (Stop returns to the start point)\n"
             "Ctrl+Space: Pause / Resume\n"
+            "P: announce the current position\n"
             "M: toggle montage mode (playback skips discarded parts)\n"
             "V: verify the cut (hear the real export join)\n"
             "S: mark region start   E: mark region end (creates a discard region)\n"
-            "X: add a cut here\n"
+            "X: divide here (add a split point)\n"
             "K: keep / discard the selected segment\n"
-            "Delete: remove a cut (merge segments)\n"
+            "Delete (or numpad Delete): remove a cut (merge segments)\n"
             "Ctrl+Z / Ctrl+Y: undo / redo\n"
             "Ctrl+E: export one file   Ctrl+Shift+E: export separate files\n"
             "Ctrl+S / Ctrl+O: save / open project\n"
             "Ctrl+G: go to a position   Ctrl+W: close"
         )
-        wx.MessageBox(text, _("Keyboard shortcuts"), wx.ICON_INFORMATION, self)
+        # Fenêtre parcourable au clavier (flèches) plutôt qu'une MessageBox : le texte
+        # est dans un TextCtrl lecture seule qui prend le focus, lu ligne à ligne par NVDA.
+        dlg = wx.Dialog(self, title=_("Keyboard shortcuts"), size=(580, 540),
+                        style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        txt = wx.TextCtrl(dlg, value=text,
+                          style=wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_RICH2)
+        txt.SetName(_("Keyboard shortcuts"))
+        sizer.Add(txt, 1, wx.EXPAND | wx.ALL, 10)
+        btn_close = wx.Button(dlg, wx.ID_CLOSE, _("Close"))
+        dlg.Bind(wx.EVT_BUTTON, lambda e: dlg.EndModal(wx.ID_CLOSE), btn_close)
+        dlg.SetEscapeId(btn_close.GetId())
+        sizer.Add(btn_close, 0, wx.ALIGN_RIGHT | wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
+        dlg.SetSizer(sizer)
+        txt.SetInsertionPoint(0)
+        wx.CallAfter(txt.SetFocus)
+        try:
+            dlg.ShowModal()
+        finally:
+            dlg.Destroy()
 
     def _do_goto(self):
         with wx.TextEntryDialog(self, _("Go to position (HH:MM:SS.mmm):"),
@@ -569,12 +596,12 @@ class SegmentEditorFrame(wx.Frame):
         snapshot = self._snapshot()
         idx = segmods.split_at(self.plan, self.position_ms)
         if idx < 0:
-            speak(_("No cut added here"))
+            speak(_("No division here"))
             return
         self._commit(snapshot)
         self._refresh_segment_list(select_index=idx)
         self._update_status()
-        speak(_("Cut added at {time}").format(time=format_timecode(self.position_ms)))
+        speak(_("Division added at {time}").format(time=format_timecode(self.position_ms)))
 
     def _mark_start(self):
         self._region_start_ms = self.position_ms
@@ -928,6 +955,10 @@ class SegmentEditorFrame(wx.Frame):
         self._silence_points = silence_points(self._silences)
         self._silence_ready = True
         self._update_status()
+        # Prévenir l'utilisateur : la détection tourne en tâche de fond et peut
+        # prendre du temps. interrupt=False pour ne pas couper une annonce en cours.
+        speak(_("Silence detection ready: {n} found").format(n=len(self._silence_points)),
+              interrupt=False)
 
     def _go_silence(self, direction):
         if not self._silence_ready:
@@ -1176,7 +1207,12 @@ class SegmentEditorFrame(wx.Frame):
             if key in (ord('M'), ord('m')):
                 self._toggle_skip_mode()
                 return
-        if key == wx.WXK_DELETE:
+            if key in (ord('P'), ord('p')):
+                self._speak_position()
+                return
+        # Fusion de la coupe : Suppr clavier étendu OU du pavé numérique (utile sur
+        # les portables sans pavé dédié, où le point du pavé num = Suppr).
+        if key in (wx.WXK_DELETE, wx.WXK_NUMPAD_DELETE, wx.WXK_DECIMAL, wx.WXK_NUMPAD_DECIMAL):
             self._remove_selected_boundary()
             return
 
@@ -1194,6 +1230,13 @@ class SegmentEditorFrame(wx.Frame):
             return
         if key == wx.WXK_END:
             self._seek_to(self.duration_ms)
+            return
+        # Déplacement par minute : Page précédente = reculer, Page suivante = avancer.
+        if key == wx.WXK_PAGEUP:
+            self._seek_to(self.position_ms - 60_000)
+            return
+        if key == wx.WXK_PAGEDOWN:
+            self._seek_to(self.position_ms + 60_000)
             return
 
         event.Skip()
