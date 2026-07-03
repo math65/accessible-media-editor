@@ -80,12 +80,49 @@ def format_timecode(ms):
     return f"{hours:02d}:{minutes:02d}:{seconds:02d}.{millis:03d}"
 
 
-def parse_timecode(text):
-    """Parse 'HH:MM:SS.mmm', 'MM:SS(.mmm)', 'SS(.mmm)' ou un nombre de secondes en
-    millisecondes. Retourne None si non interprétable."""
-    text = (text or "").strip().replace(',', '.')
+def parse_timecode(text, fps=None):
+    """Parse une saisie de temps en millisecondes. Retourne None si non interprétable.
+
+    Formes acceptées :
+      - 'HH:MM:SS.mmm', 'MM:SS(.mmm)', 'SS(.mmm)' ou un nombre : la partie
+        fractionnaire est en secondes décimales (millisecondes).
+      - timecode image SMPTE 'HH:MM:SS:FF' (quatre champs séparés par ':') ou
+        'HH:MM:SS;FF' (point-virgule avant les images, notation VideoReDo) : le
+        dernier champ est un NUMÉRO D'IMAGE, converti en ms via `fps`. Permet de
+        recopier les timecodes d'un éditeur image-exact (VideoReDo…) dont le
+        dernier champ compte des images, pas des centièmes de seconde. Nécessite
+        un fps connu ; retourne None sinon.
+    """
+    text = (text or "").strip()
     if not text:
         return None
+
+    # Notation image : point-virgule avant les images (drop-frame VideoReDo) ou
+    # quatre champs séparés par ':'. Le dernier champ est un compte d'images.
+    frame_sep = ';' in text
+    if frame_sep:
+        head, _sep, frame_str = text.rpartition(';')
+        fields = head.split(':') + [frame_str]
+    else:
+        fields = text.split(':')
+
+    if frame_sep or len(fields) == 4:
+        if not fps or fps <= 0 or len(fields) > 4:
+            return None
+        try:
+            nums = [int(part) for part in fields]  # forme image = entiers seulement
+        except (ValueError, TypeError):
+            return None
+        frames = nums[-1]
+        seconds = 0
+        for part in nums[:-1]:
+            seconds = seconds * 60 + part
+        # Conversion non drop-frame (correcte pour le PAL 25 fps ; l'écart
+        # drop-frame NTSC 29.97 n'est pas compensé, cas non rencontré ici).
+        return int(round(seconds * 1000 + frames * 1000.0 / fps))
+
+    # Forme décimale : la partie fractionnaire est en millisecondes.
+    text = text.replace(',', '.')
     try:
         if ':' in text:
             parts = text.split(':')
@@ -117,6 +154,8 @@ class SegmentEditorFrame(wx.Frame):
         self.on_persist = on_persist
         self._settings = settings_store if isinstance(settings_store, dict) else {}
         self.duration_ms = int(round(float(getattr(meta, 'duration', 0) or 0) * 1000))
+        # Cadence vidéo : permet la saisie de timecode image 'HH:MM:SS:FF' (0 = inconnu).
+        self.fps = float(getattr(meta, 'video_fps', 0) or 0)
         self.plan = segmods.new_plan(self.duration_ms)
         self.position_ms = 0
         self.step_ms = _STEP_CHOICES[_DEFAULT_STEP_INDEX][1]
@@ -595,15 +634,21 @@ class SegmentEditorFrame(wx.Frame):
             dlg.Destroy()
 
     def _do_goto(self):
-        with wx.TextEntryDialog(self, _("Go to position (HH:MM:SS.mmm):"),
-                                _("Go to position")) as dlg:
+        # Avec un fps connu, on accepte aussi le timecode image 'HH:MM:SS:FF'
+        # (dernier champ = numéro d'image), pratique pour recopier VideoReDo.
+        if self.fps and self.fps > 0:
+            prompt = _("Go to position (HH:MM:SS.mmm, or HH:MM:SS;FF for frames):")
+            invalid = _("Please enter a valid time (HH:MM:SS.mmm, or HH:MM:SS;FF for frames).")
+        else:
+            prompt = _("Go to position (HH:MM:SS.mmm):")
+            invalid = _("Please enter a valid time (HH:MM:SS.mmm).")
+        with wx.TextEntryDialog(self, prompt, _("Go to position")) as dlg:
             if dlg.ShowModal() != wx.ID_OK:
                 return
-            ms = parse_timecode(dlg.GetValue())
+            ms = parse_timecode(dlg.GetValue(), self.fps)
         if ms is None:
             speak(_("Invalid time"))
-            wx.MessageBox(_("Please enter a valid time (HH:MM:SS.mmm)."),
-                          _("Invalid time"), wx.ICON_WARNING, self)
+            wx.MessageBox(invalid, _("Invalid time"), wx.ICON_WARNING, self)
             return
         self._seek_to(ms)
 

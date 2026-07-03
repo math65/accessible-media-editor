@@ -21,6 +21,30 @@ def _translate(msgid):
 def _translatef(msgid, **kwargs):
     return _translate(msgid).format(**kwargs)
 
+
+def _parse_frame_rate(stream):
+    """Frames-per-second d'un flux vidéo (float), ou 0.0 si indisponible.
+
+    Préfère avg_frame_rate (moyenne réelle) à r_frame_rate (base nominale, qui
+    peut être un énorme tbr en VFR). ffprobe émet une fraction 'num/den'. Sert à
+    convertir un timecode image 'HH:MM:SS:FF' en millisecondes côté éditeur."""
+    for key in ('avg_frame_rate', 'r_frame_rate'):
+        val = stream.get(key)
+        if not val or str(val) in ('0/0', '0'):
+            continue
+        try:
+            text = str(val)
+            if '/' in text:
+                num_str, den_str = text.split('/', 1)
+                num, den = float(num_str), float(den_str)
+                if den:
+                    return num / den
+            else:
+                return float(text)
+        except (ValueError, TypeError):
+            continue
+    return 0.0
+
 class MediaTrack:
     def __init__(self, stream_index, codec_type, codec_name, language='und', title=None, disposition=None):
         self.index = stream_index
@@ -60,6 +84,10 @@ class MediaMetadata:
         self.audio_codec = ""
         self.width = 0
         self.height = 0
+        # Cadence du flux vidéo (images/s). Sert à interpréter une saisie de
+        # timecode image 'HH:MM:SS:FF' (dernier champ = numéro d'image) dans
+        # l'éditeur de segments. 0.0 = inconnu (audio seul, VFR non résolu…).
+        self.video_fps = 0.0
         self.has_video = False
         self.is_image = False
         self.track_settings = None
@@ -215,6 +243,7 @@ class FileProber:
                             meta.width = stream.get('width', 0)
                             meta.height = stream.get('height', 0)
                             meta.video_codec = c_name
+                            meta.video_fps = _parse_frame_rate(stream)
 
                 elif c_type == 'audio':
                     if not track.is_hidden_from_ui():
