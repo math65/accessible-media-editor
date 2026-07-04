@@ -36,6 +36,13 @@ from core.ffmpeg_helpers import (
 
 FFPROBE_TIMEOUT_SECONDS = 60
 
+# Réencodage des bords : on seek d'abord grossièrement quelques secondes AVANT le point
+# voulu (seek d'entrée, cale sur une keyframe), puis on affine avec un seek de sortie. Ce
+# « lead-in » donne au décodeur du contexte (frames de référence) : sans lui, un seek
+# direct au milieu d'un GOP sur un flux fragile (captures TV, sorties VideoReDo aux
+# références H.264 tordues) ne décode rien et produit une sortie vide.
+_LEAD_IN_SECONDS = 2.0
+
 # codec source (ffprobe codec_name) → encodeur libx* pour réencoder les bords en
 # gardant le même codec (indispensable pour que le concat demuxer accepte le mélange).
 _ENCODER_FOR_CODEC = {
@@ -107,6 +114,10 @@ def probe_video_params(input_path):
         'pix_fmt': video.get('pix_fmt') or 'yuv420p',
         'profile': (video.get('profile') or '').lower() or None,
         'has_audio': any(s.get('codec_type') == 'audio' for s in streams),
+        # Décalage du 1er PTS (les .ts de captures démarrent rarement à 0). Les temps
+        # de région sont 0-based (durée du fichier), mais les keyframes sondées sont en
+        # PTS brut → il faut retrancher ce décalage pour les aligner.
+        'start_time': _parse_rate(video.get('start_time')),
     }
 
 
@@ -181,6 +192,10 @@ class SmartCutter:
         if params['encoder'] in ('libx264', 'libx265') and params.get('profile'):
             # profils valides côté encodeur (baseline/main/high pour x264).
             args += ['-profile:v', params['profile']]
+        # Ne jamais abandonner sur un flux au décodage fragile : les bords sont courts,
+        # quelques erreurs de décodage y font grimper le taux au-dessus du seuil par
+        # défaut (0.667) et ffmpeg s'arrête (ex. captures TV / sorties VideoReDo).
+        args += ['-max_error_rate', '1.0']
         if self.threads is not None:
             args += ['-threads', str(self.threads)]
         return args
@@ -201,9 +216,12 @@ class SmartCutter:
         if f_end <= f_start:
             raise SmartCutNotApplicable("empty region")
 
-        # keyframes → indices d'images (fenêtre élargie d'1 s pour capter les bords).
-        kf_times = probe_keyframe_times(input_path, max(0.0, start_s - 1.0), end_s + 1.0)
-        kf_frames = sorted({int(round(t * fps)) for t in kf_times})
+        # keyframes → indices d'images 0-based (fenêtre élargie d'1 s pour capter les
+        # bords). La sonde renvoie du PTS brut → retrancher start_time pour aligner sur
+        # le temps de région 0-based et sur ce que -ss attend.
+        st = params.get('start_time', 0.0) or 0.0
+        kf_times = probe_keyframe_times(input_path, max(0.0, start_s + st - 1.0), end_s + st + 1.0)
+        kf_frames = sorted({int(round((t - st) * fps)) for t in kf_times})
         kf1 = next((k for k in kf_frames if k >= f_start), None)
         kf2 = next((k for k in reversed(kf_frames) if k <= f_end), None)
         # Il faut une vraie zone copiable [kf1, kf2) strictement à l'intérieur.
@@ -215,6 +233,7 @@ class SmartCutter:
         try:
             enc = self._encode_args(params)
             genpts = ['-fflags', '+genpts'] if is_transport_stream(input_path) else []
+            tol = ['-err_detect', 'ignore_err']  # bords réencodés : tolérer un flux fragile
 
             def mktemp(suffix):
                 fd, path = tempfile.mkstemp(suffix=suffix, prefix='ame_sc_')
@@ -224,13 +243,15 @@ class SmartCutter:
 
             pieces = []
 
-            # tête réencodée [f_start, kf1)
+            # tête réencodée [f_start, kf1) — seek grossier (lead-in) puis affinage. Compte
+            # d'images forcé par -frames:v (exact) : -t coupe 1 image trop tôt au bord.
             if kf1 > f_start:
                 head = mktemp('.ts')
-                dur = (kf1 - f_start) / fps
+                coarse = max(0.0, start_s - _LEAD_IN_SECONDS)
                 self._run([self.ffmpeg, '-y', '-hide_banner', '-loglevel', 'error']
-                          + genpts + ['-ss', '%.6f' % start_s, '-i', input_path,
-                          '-t', '%.6f' % dur, '-an'] + enc + ['-f', 'mpegts', head])
+                          + genpts + tol + ['-ss', '%.6f' % coarse, '-i', input_path,
+                          '-ss', '%.6f' % (start_s - coarse), '-frames:v', str(kf1 - f_start),
+                          '-an'] + enc + ['-f', 'mpegts', head])
                 pieces.append(head)
 
             # milieu copié [kf1, kf2) par nombre d'images exact
@@ -241,13 +262,15 @@ class SmartCutter:
                       '-c:v', 'copy', '-an', '-frames:v', str(n_mid), '-f', 'mpegts', mid])
             pieces.append(mid)
 
-            # queue réencodée [kf2, f_end)
+            # queue réencodée [kf2, f_end) — même lead-in, compte d'images forcé.
             if f_end > kf2:
                 tail = mktemp('.ts')
-                dur = (f_end - kf2) / fps
+                kf2_s = kf2 / fps
+                coarse = max(0.0, kf2_s - _LEAD_IN_SECONDS)
                 self._run([self.ffmpeg, '-y', '-hide_banner', '-loglevel', 'error']
-                          + genpts + ['-ss', '%.6f' % (kf2 / fps), '-i', input_path,
-                          '-t', '%.6f' % dur, '-an'] + enc + ['-f', 'mpegts', tail])
+                          + genpts + tol + ['-ss', '%.6f' % coarse, '-i', input_path,
+                          '-ss', '%.6f' % (kf2_s - coarse), '-frames:v', str(f_end - kf2),
+                          '-an'] + enc + ['-f', 'mpegts', tail])
                 pieces.append(tail)
 
             # concat vidéo
@@ -261,15 +284,17 @@ class SmartCutter:
                        '-f', 'concat', '-safe', '0', '-i', list_path,
                        '-c', 'copy', '-f', 'mpegts', video_ts])
 
-            # audio copié en un seul flux + mux (ou remux vidéo seule)
+            # audio copié en un seul flux continu (TOUTES les pistes) + mux (ou remux
+            # vidéo seule). Un seul flux continu → pas de jointure audio, pas de clic.
             if params.get('has_audio'):
                 audio = mktemp(ext)
                 self._run([self.ffmpeg, '-y', '-hide_banner', '-loglevel', 'error']
                           + genpts + ['-ss', '%.6f' % start_s, '-i', input_path,
-                          '-t', '%.6f' % (end_s - start_s), '-vn', '-c:a', 'copy', audio])
+                          '-t', '%.6f' % (end_s - start_s), '-vn', '-map', '0:a',
+                          '-c:a', 'copy', audio])
                 self._run([self.ffmpeg, '-y', '-hide_banner', '-loglevel', 'error',
                            '-i', video_ts, '-i', audio, '-c', 'copy',
-                           '-map', '0:v:0', '-map', '1:a:0', output_path])
+                           '-map', '0:v:0', '-map', '1:a', output_path])
             else:
                 self._run([self.ffmpeg, '-y', '-hide_banner', '-loglevel', 'error',
                            '-i', video_ts, '-c', 'copy', output_path])
