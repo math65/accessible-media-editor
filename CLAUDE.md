@@ -146,13 +146,14 @@ without them and PyInstaller bundles them from `bin/`.
 
 ## Relationship to Accessible Media Converter
 
-**AME is intended to eventually replace AMC's integrated cutter** (Mathieu's decision, 2026-07-02).
-The transition is deferred, not immediate:
+**AME has been dissociated from AMC (2026-07-04): AMC's integrated cutter was removed, and AME is
+now the standalone cutter/editor.** The transition is done — AME no longer shares a live codebase
+with AMC's cutter.
 
-- **For now, do not touch AMC.** Its integrated cutter ships as beta `v1.20.0-rc1` and a blind beta
-  tester is validating it. Removing it before AME is mature would strand testers. Nothing in this
-  repo modifies AMC.
-- **When AME is mature enough** to cover the cutter's use cases (remove ads, split), deprecate and
-  remove the cutter from AMC, and point AMC users to AME.
-- Until then the two share engine files (segments/audio_player/segment_export/ffmpeg_helpers…).
-  Bug fixes in shared code should be ported both ways until they deliberately diverge.
+- **No more two-way porting.** Fixes and features in the engine files
+  (`segments`/`audio_player`/`segment_export`/`ffmpeg_helpers`/`probe`/`parse_timecode`…) are
+  **AME-only**. Do **not** back-port them to AMC — the cutter isn't there anymore.
+- The engine files were originally *carried over* from AMC (see **Origin** above), so historical
+  code still reads like AMC's, but the two have now diverged for good on the cutter.
+- AMC (`C:\Users\mathi\dev\UniversalTranscoder`) remains a separate converter app; nothing in this
+  repo modifies it, and it no longer contains the cutter to keep in sync.
