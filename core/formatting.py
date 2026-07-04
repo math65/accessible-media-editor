@@ -205,6 +205,10 @@ APP_DEFAULT_SETTINGS = {
     # Éditeur de découpe : annonces vocales (NVDA) — mémorisées entre sessions.
     "cutter_announce_transport": True,   # annoncer Lecture / Stop / Pause
     "cutter_announce_position": True,    # annoncer la position lors des déplacements
+    # Coupe « copie exacte » (smart cut) : en mode copie, réencode seulement les GOP
+    # tronqués aux bords pour une coupe image-exacte (façon VideoReDo) au lieu de se
+    # caler sur la keyframe. Opt-in (un peu plus lent que la copie pure).
+    "cutter_smart_cut": False,
     "m4b_chapter_naming": DEFAULT_M4B_CHAPTER_NAMING,
     "ui_language": AUTO_LANGUAGE_CODE,
     "install_id": "",              # identifiant anonyme d'installation (généré au 1er lancement)
@@ -413,6 +417,9 @@ def normalize_settings_store(settings_store):
     )
     normalized["cutter_announce_position"] = bool(
         normalized.get("cutter_announce_position", APP_DEFAULT_SETTINGS["cutter_announce_position"])
+    )
+    normalized["cutter_smart_cut"] = bool(
+        normalized.get("cutter_smart_cut", APP_DEFAULT_SETTINGS["cutter_smart_cut"])
     )
     normalized["preserve_folder_structure"] = bool(
         normalized.get("preserve_folder_structure", APP_DEFAULT_SETTINGS["preserve_folder_structure"])

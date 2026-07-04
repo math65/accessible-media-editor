@@ -405,67 +405,67 @@ msgstr "Votre message :"
 msgid "Technical information:"
 msgstr "Informations techniques :"
 
-#: core/formatting.py:270
+#: core/formatting.py:274
 msgid "MP3 - Audio"
 msgstr "MP3 - Audio"
 
-#: core/formatting.py:258
+#: core/formatting.py:262
 msgid "MP3 - Audio (Extract)"
 msgstr "MP3 - Audio (extraction)"
 
-#: core/formatting.py:259
+#: core/formatting.py:263
 msgid "AAC - Audio (Extract)"
 msgstr "AAC - Audio (extraction)"
 
-#: core/formatting.py:271
+#: core/formatting.py:275
 msgid "AAC - Audio (M4A)"
 msgstr "AAC - Audio (M4A)"
 
-#: core/formatting.py:273
+#: core/formatting.py:277
 msgid "WAV - Audio (Lossless)"
 msgstr "WAV - Audio (sans perte)"
 
-#: core/formatting.py:261
+#: core/formatting.py:265
 msgid "WAV - Audio (Extract)"
 msgstr "WAV - Audio (extraction)"
 
-#: core/formatting.py:274
+#: core/formatting.py:278
 msgid "FLAC - Audio (Lossless)"
 msgstr "FLAC - Audio (sans perte)"
 
-#: core/formatting.py:262
+#: core/formatting.py:266
 msgid "FLAC - Audio (Extract)"
 msgstr "FLAC - Audio (extraction)"
 
-#: core/formatting.py:275
+#: core/formatting.py:279
 msgid "ALAC - Audio (Apple Lossless)"
 msgstr "ALAC - Audio (sans perte Apple)"
 
-#: core/formatting.py:263
+#: core/formatting.py:267
 msgid "ALAC - Audio (Extract)"
 msgstr "ALAC - Audio (extraction)"
 
-#: core/formatting.py:276
+#: core/formatting.py:280
 msgid "OGG - Audio (Vorbis)"
 msgstr "OGG - Audio (Vorbis)"
 
-#: core/formatting.py:264
+#: core/formatting.py:268
 msgid "OGG - Audio (Extract)"
 msgstr "OGG - Audio (extraction)"
 
-#: core/formatting.py:277
+#: core/formatting.py:281
 msgid "WMA - Audio (Legacy)"
 msgstr "WMA - Audio (ancien)"
 
-#: core/formatting.py:265
+#: core/formatting.py:269
 msgid "WMA - Audio (Extract)"
 msgstr "WMA - Audio (extraction)"
 
-#: core/formatting.py:278
+#: core/formatting.py:282
 msgid "MP4 - Video (H.264)"
 msgstr "MP4 - Vidéo (H.264)"
 
-#: core/formatting.py:279
+#: core/formatting.py:283
 msgid "MKV - Video"
 msgstr "MKV - Vidéo"
 
@@ -507,44 +507,44 @@ msgid "Info"
 msgstr "Information"
 
 # --- RÉSUMÉS DE FORMATS ---
-#: core/formatting.py:589
+#: core/formatting.py:596
 msgid "CBR {bitrate}"
 msgstr "CBR {bitrate}"
 
-#: core/formatting.py:578
+#: core/formatting.py:585
 msgid "VBR Q{quality}"
 msgstr "VBR Q{quality}"
 
-#: core/formatting.py:557
+#: core/formatting.py:564
 msgid "Copy"
 msgstr "Copie"
 
-#: core/formatting.py:244 core/formatting.py:561 core/formatting.py:562
+#: core/formatting.py:248 core/formatting.py:568 core/formatting.py:569
 #: ui/settings_dialog.py:797
 msgid "Lossless"
 msgstr "Sans perte"
 
-#: core/formatting.py:538 core/formatting.py:549
+#: core/formatting.py:545 core/formatting.py:556
 msgid "Normalized -16 LUFS"
 msgstr "Normalisé -16 LUFS"
 
-#: core/formatting.py:599
+#: core/formatting.py:606
 msgid "Stereo"
 msgstr "Stéréo"
 
-#: core/formatting.py:526
+#: core/formatting.py:533
 msgid "Video: Copy"
 msgstr "Vidéo : copie"
 
-#: core/formatting.py:528
+#: core/formatting.py:535
 msgid "H.264 CRF {crf}"
 msgstr "H.264 CRF {crf}"
 
-#: core/formatting.py:534
+#: core/formatting.py:541
 msgid "Audio: Copy"
 msgstr "Audio : copie"
 
-#: core/formatting.py:539
+#: core/formatting.py:546
 msgid "Audio: {summary}"
 msgstr "Audio : {summary}"
 
@@ -637,11 +637,11 @@ msgstr "Configuration des canaux de sortie."
 msgid "Stereo (Downmix)"
 msgstr "Stéréo (mixage réduit)"
 
-#: core/formatting.py:601 ui/settings_dialog.py:135
+#: core/formatting.py:608 ui/settings_dialog.py:135
 msgid "Mono"
 msgstr "Mono"
 
-#: core/formatting.py:602 ui/settings_dialog.py:135
+#: core/formatting.py:609 ui/settings_dialog.py:135
 msgid "Original Channels"
 msgstr "Canaux d'origine"
 
@@ -673,7 +673,7 @@ msgstr "Débit :"
 msgid "Bitrate"
 msgstr "Débit"
 
-#: core/formatting.py:568
+#: core/formatting.py:575
 msgid "Bitrate {bitrate}"
 msgstr "Débit {bitrate}"
 
@@ -867,19 +867,19 @@ msgstr "Format de pixel"
 msgid "Choose the output pixel format."
 msgstr "Choisissez le format de pixel de sortie."
 
-#: core/formatting.py:290
+#: core/formatting.py:294
 msgid "AAC"
 msgstr "AAC"
 
-#: core/formatting.py:291
+#: core/formatting.py:295
 msgid "MP3"
 msgstr "MP3"
 
-#: core/formatting.py:292
+#: core/formatting.py:296
 msgid "Opus"
 msgstr "Opus"
 
-#: core/formatting.py:293
+#: core/formatting.py:297
 msgid "FLAC"
 msgstr "FLAC"
 
@@ -932,7 +932,7 @@ msgstr "Problème d'installation"
 msgid "Feature request"
 msgstr "Demande de fonctionnalité"
 
-#: core/formatting.py:232
+#: core/formatting.py:236
 msgid "BMP - Image (Uncompressed)"
 msgstr "BMP - Image (Non compressée)"
 
@@ -952,7 +952,7 @@ msgstr "Niveau de compression (0-9) :"
 msgid "Compression level"
 msgstr "Niveau de compression"
 
-#: core/formatting.py:241 core/formatting.py:247
+#: core/formatting.py:245 core/formatting.py:251
 msgid "Compression {c}"
 msgstr "Compression {c}"
 
@@ -984,7 +984,7 @@ msgstr "Qualité de l'image"
 msgid "Image settings panel"
 msgstr "Panneau des réglages image"
 
-#: core/formatting.py:228
+#: core/formatting.py:232
 msgid "JPEG - Image"
 msgstr "JPEG - Image"
 
@@ -996,7 +996,7 @@ msgstr "Mode sans perte"
 msgid "None"
 msgstr "Aucune"
 
-#: core/formatting.py:229
+#: core/formatting.py:233
 msgid "PNG - Image (Lossless)"
 msgstr "PNG - Image (Sans perte)"
 
@@ -1012,7 +1012,7 @@ msgstr "Qualité (1-100) :"
 msgid "Quality from 1 (lowest) to 100 (highest)."
 msgstr "Qualité de 1 (la plus basse) à 100 (la plus haute)."
 
-#: core/formatting.py:239 core/formatting.py:245
+#: core/formatting.py:243 core/formatting.py:249
 msgid "Quality {q}"
 msgstr "Qualité {q}"
 
@@ -1024,7 +1024,7 @@ msgstr "Redimensionnement"
 msgid "Resize:"
 msgstr "Redimensionnement :"
 
-#: core/formatting.py:231
+#: core/formatting.py:235
 msgid "TIFF - Image (Lossless)"
 msgstr "TIFF - Image (Sans perte)"
 
@@ -1032,7 +1032,7 @@ msgstr "TIFF - Image (Sans perte)"
 msgid "TIFF compression"
 msgstr "Compression TIFF"
 
-#: core/formatting.py:249
+#: core/formatting.py:253
 msgid "Uncompressed"
 msgstr "Non compressée"
 
@@ -1040,11 +1040,11 @@ msgstr "Non compressée"
 msgid "Use Tab to navigate image options."
 msgstr "Utilisez Tab pour naviguer entre les options image."
 
-#: core/formatting.py:230
+#: core/formatting.py:234
 msgid "WebP - Image"
 msgstr "WebP - Image"
 
-#: core/conversion.py:467 core/merge.py:117 core/segment_export.py:100
+#: core/conversion.py:515 core/merge.py:117 core/segment_export.py:132
 msgid "File not found (it may have been moved or deleted): {name}"
 msgstr "Fichier introuvable (il a peut-être été déplacé ou supprimé) : {name}"
 
@@ -1144,15 +1144,15 @@ msgstr "Regroupement"
 msgid "Chapter {number}"
 msgstr "Chapitre {number}"
 
-#: core/formatting.py:260
+#: core/formatting.py:264
 msgid "M4B - Audio (Extract)"
 msgstr "M4B - Audio (extraction)"
 
-#: core/formatting.py:272
+#: core/formatting.py:276
 msgid "M4B - Audiobook (Chapters)"
 msgstr "M4B - Livre audio (Chapitres)"
 
-#: core/formatting.py:587
+#: core/formatting.py:594
 msgid "ABR {bitrate}"
 msgstr "ABR {bitrate}"
 
@@ -1168,7 +1168,7 @@ msgstr "Débit utilisé en mode CBR (moyenne ciblée en ABR)."
 msgid "Choose CBR, ABR (MP3 only) or VBR mode."
 msgstr "Choisir le mode CBR, ABR (MP3 uniquement) ou VBR."
 
-#: core/conversion.py:678
+#: core/conversion.py:732
 msgid ""
 "The converted file is unexpectedly short — the conversion likely failed."
 msgstr ""
@@ -1209,7 +1209,7 @@ msgstr "Annonce"
 msgid "Open link"
 msgstr "Ouvrir le lien"
 
-#: ui/host.py:243 ui/host.py:306 ui/host.py:75 ui/preferences_dialog.py:80
+#: ui/host.py:246 ui/host.py:309 ui/host.py:75 ui/preferences_dialog.py:80
 msgid "Export"
 msgstr "Exporter"
 
@@ -1233,7 +1233,7 @@ msgstr "10 secondes"
 msgid "100 ms"
 msgstr "100 ms"
 
-#: core/batch_manager.py:132 core/segment_export.py:106 core/segments.py:254
+#: core/batch_manager.py:132 core/segment_export.py:138 core/segments.py:254
 msgid "At least one segment must be kept."
 msgstr "Au moins un segment doit être conservé."
 
@@ -1454,11 +1454,11 @@ msgstr "Pas : {step}   |   Régions gardées : {kept}"
 msgid "&Options"
 msgstr "&Options"
 
-#: ui/preferences_dialog.py:119
+#: ui/preferences_dialog.py:122
 msgid "Announce playback actions"
 msgstr "Annoncer les actions de lecture"
 
-#: ui/preferences_dialog.py:120
+#: ui/preferences_dialog.py:123
 msgid "Announce position when moving"
 msgstr "Annoncer la position lors des déplacements"
 
@@ -1679,19 +1679,19 @@ msgstr "Ouverture impossible"
 msgid "Cut / export problem"
 msgstr "Problème de découpe / export"
 
-#: ui/host.py:288
+#: ui/host.py:291
 msgid "Export complete: {n} file(s) created in {dir}"
 msgstr "Export terminé : {n} fichier(s) créé(s) dans {dir}"
 
-#: ui/host.py:247
+#: ui/host.py:250
 msgid "Export complete: {path}"
 msgstr "Export terminé : {path}"
 
-#: ui/host.py:255
+#: ui/host.py:258
 msgid "Export failed: {error}"
 msgstr "Échec de l'export : {error}"
 
-#: ui/host.py:257 ui/host.py:283
+#: ui/host.py:260 ui/host.py:286
 msgid "Export stopped."
 msgstr "Export arrêté."
 
@@ -1699,7 +1699,7 @@ msgstr "Export arrêté."
 msgid "Exporting..."
 msgstr "Export en cours..."
 
-#: ui/host.py:285
+#: ui/host.py:288
 msgid "Finished with errors: {done}/{total} file(s) created."
 msgstr "Terminé avec des erreurs : {done}/{total} fichier(s) créé(s)."
 
@@ -1731,7 +1731,7 @@ msgstr "Ouvrir un fichier..."
 msgid "Playback problem"
 msgstr "Problème de lecture"
 
-#: ui/host.py:229
+#: ui/host.py:232
 msgid "Save cut file"
 msgstr "Enregistrer le fichier découpé"
 
@@ -1739,7 +1739,7 @@ msgstr "Enregistrer le fichier découpé"
 msgid "Segments: {value}"
 msgstr "Segments : {value}"
 
-#: ui/host.py:268
+#: ui/host.py:271
 msgid "Select output folder for the pieces"
 msgstr "Choisir le dossier de sortie pour les morceaux"
 
@@ -1759,7 +1759,7 @@ msgstr "Préférences"
 msgid "Automatic"
 msgstr "Automatique"
 
-#: ui/preferences_dialog.py:126
+#: ui/preferences_dialog.py:129
 msgid "Language"
 msgstr "Langue"
 
@@ -1767,7 +1767,7 @@ msgstr "Langue"
 msgid "&Preferences..."
 msgstr "&Préférences..."
 
-#: ui/preferences_dialog.py:138
+#: ui/preferences_dialog.py:141
 msgid "Applied on the next launch."
 msgstr "Appliqué au prochain démarrage."
 
@@ -1792,7 +1792,7 @@ msgid "Include pre-releases (rc / beta) in the update check"
 msgstr ""
 "Inclure les pré-versions (rc / bêta) dans la vérification des mises à jour"
 
-#: ui/preferences_dialog.py:130 ui/preferences_dialog.py:133
+#: ui/preferences_dialog.py:133 ui/preferences_dialog.py:136
 msgid "Interface language"
 msgstr "Langue de l'interface"
 
@@ -1804,7 +1804,7 @@ msgstr "Conversions simultanées maximum"
 msgid "Open the output folder after export"
 msgstr "Ouvrir le dossier de sortie après l'export"
 
-#: ui/preferences_dialog.py:117
+#: ui/preferences_dialog.py:120
 msgid "Speech"
 msgstr "Voix"
 
@@ -1937,6 +1937,10 @@ msgid "Please enter a valid time (HH:MM:SS.mmm, or HH:MM:SS;FF for frames)."
 msgstr ""
 "Veuillez entrer une heure valide (HH:MM:SS.mmm, ou HH:MM:SS;FF pour les "
 "images)."
+
+#: ui/preferences_dialog.py:113
+msgid "Frame-exact cuts in copy mode (re-encodes cut boundaries, slower)"
+msgstr "Coupe image-exacte en mode copie (réencode les bords, plus lent)"
 
 #~ msgid "Copy Stream (Advanced)"
 #~ msgstr "Copie du flux (avancé)"

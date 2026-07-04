@@ -102,27 +102,27 @@ msgstr ""
 msgid "A new version of {app_name} is available."
 msgstr ""
 
-#: core/formatting.py:290
+#: core/formatting.py:294
 msgid "AAC"
 msgstr ""
 
-#: core/formatting.py:259
+#: core/formatting.py:263
 msgid "AAC - Audio (Extract)"
 msgstr ""
 
-#: core/formatting.py:271
+#: core/formatting.py:275
 msgid "AAC - Audio (M4A)"
 msgstr ""
 
-#: core/formatting.py:587
+#: core/formatting.py:594
 msgid "ABR {bitrate}"
 msgstr ""
 
-#: core/formatting.py:275
+#: core/formatting.py:279
 msgid "ALAC - Audio (Apple Lossless)"
 msgstr ""
 
-#: core/formatting.py:263
+#: core/formatting.py:267
 msgid "ALAC - Audio (Extract)"
 msgstr ""
 
@@ -146,11 +146,11 @@ msgstr ""
 msgid "All files"
 msgstr ""
 
-#: ui/preferences_dialog.py:119
+#: ui/preferences_dialog.py:122
 msgid "Announce playback actions"
 msgstr ""
 
-#: ui/preferences_dialog.py:120
+#: ui/preferences_dialog.py:123
 msgid "Announce position when moving"
 msgstr ""
 
@@ -166,7 +166,7 @@ msgstr ""
 msgid "Application crash"
 msgstr ""
 
-#: ui/preferences_dialog.py:138
+#: ui/preferences_dialog.py:141
 msgid "Applied on the next launch."
 msgstr ""
 
@@ -178,7 +178,7 @@ msgstr ""
 msgid "Artist"
 msgstr ""
 
-#: core/batch_manager.py:132 core/segment_export.py:106 core/segments.py:254
+#: core/batch_manager.py:132 core/segment_export.py:138 core/segments.py:254
 msgid "At least one segment must be kept."
 msgstr ""
 
@@ -210,11 +210,11 @@ msgstr ""
 msgid "Audio settings panel"
 msgstr ""
 
-#: core/formatting.py:534
+#: core/formatting.py:541
 msgid "Audio: Copy"
 msgstr ""
 
-#: core/formatting.py:539
+#: core/formatting.py:546
 msgid "Audio: {summary}"
 msgstr ""
 
@@ -238,7 +238,7 @@ msgstr ""
 msgid "Average Bitrate (ABR)"
 msgstr ""
 
-#: core/formatting.py:232
+#: core/formatting.py:236
 msgid "BMP - Image (Uncompressed)"
 msgstr ""
 
@@ -270,7 +270,7 @@ msgstr ""
 msgid "Bitrate used in CBR mode (target average in ABR)."
 msgstr ""
 
-#: core/formatting.py:568
+#: core/formatting.py:575
 msgid "Bitrate {bitrate}"
 msgstr ""
 
@@ -282,7 +282,7 @@ msgstr ""
 msgid "Boundary moved to {time}"
 msgstr ""
 
-#: core/formatting.py:589
+#: core/formatting.py:596
 msgid "CBR {bitrate}"
 msgstr ""
 
@@ -405,7 +405,7 @@ msgstr ""
 msgid "Compression level for FLAC."
 msgstr ""
 
-#: core/formatting.py:241 core/formatting.py:247
+#: core/formatting.py:245 core/formatting.py:251
 msgid "Compression {c}"
 msgstr ""
 
@@ -433,7 +433,7 @@ msgstr ""
 msgid "Continue despite errors"
 msgstr ""
 
-#: core/formatting.py:557
+#: core/formatting.py:564
 msgid "Copy"
 msgstr ""
 
@@ -623,7 +623,7 @@ msgstr ""
 msgid "Execution mode: {value}"
 msgstr ""
 
-#: ui/host.py:243 ui/host.py:306 ui/host.py:75 ui/preferences_dialog.py:80
+#: ui/host.py:246 ui/host.py:309 ui/host.py:75 ui/preferences_dialog.py:80
 msgid "Export"
 msgstr ""
 
@@ -635,15 +635,15 @@ msgstr ""
 msgid "Export as separate files (one per kept region)"
 msgstr ""
 
-#: ui/host.py:288
+#: ui/host.py:291
 msgid "Export complete: {n} file(s) created in {dir}"
 msgstr ""
 
-#: ui/host.py:247
+#: ui/host.py:250
 msgid "Export complete: {path}"
 msgstr ""
 
-#: ui/host.py:255
+#: ui/host.py:258
 msgid "Export failed: {error}"
 msgstr ""
 
@@ -655,7 +655,7 @@ msgstr ""
 msgid "Export started"
 msgstr ""
 
-#: ui/host.py:257 ui/host.py:283
+#: ui/host.py:260 ui/host.py:286
 msgid "Export stopped."
 msgstr ""
 
@@ -667,15 +667,15 @@ msgstr ""
 msgid "FFmpeg threads"
 msgstr ""
 
-#: core/formatting.py:293
+#: core/formatting.py:297
 msgid "FLAC"
 msgstr ""
 
-#: core/formatting.py:262
+#: core/formatting.py:266
 msgid "FLAC - Audio (Extract)"
 msgstr ""
 
-#: core/formatting.py:274
+#: core/formatting.py:278
 msgid "FLAC - Audio (Lossless)"
 msgstr ""
 
@@ -687,7 +687,7 @@ msgstr ""
 msgid "Feature request"
 msgstr ""
 
-#: core/conversion.py:467 core/merge.py:117 core/segment_export.py:100
+#: core/conversion.py:515 core/merge.py:117 core/segment_export.py:132
 msgid "File not found (it may have been moved or deleted): {name}"
 msgstr ""
 
@@ -699,7 +699,7 @@ msgstr ""
 msgid "Finer step"
 msgstr ""
 
-#: ui/host.py:285
+#: ui/host.py:288
 msgid "Finished with errors: {done}/{total} file(s) created."
 msgstr ""
 
@@ -709,6 +709,10 @@ msgstr ""
 
 #: ui/segment_editor.py:259
 msgid "Forward"
+msgstr ""
+
+#: ui/preferences_dialog.py:113
+msgid "Frame-exact cuts in copy mode (re-encodes cut boundaries, slower)"
 msgstr ""
 
 #: ui/support_dialog.py:156
@@ -756,7 +760,7 @@ msgstr ""
 msgid "Grouping"
 msgstr ""
 
-#: core/formatting.py:528
+#: core/formatting.py:535
 msgid "H.264 CRF {crf}"
 msgstr ""
 
@@ -824,7 +828,7 @@ msgstr ""
 msgid "Installation problem"
 msgstr ""
 
-#: ui/preferences_dialog.py:130 ui/preferences_dialog.py:133
+#: ui/preferences_dialog.py:133 ui/preferences_dialog.py:136
 msgid "Interface language"
 msgstr ""
 
@@ -844,7 +848,7 @@ msgstr ""
 msgid "Issue type: {value}"
 msgstr ""
 
-#: core/formatting.py:228
+#: core/formatting.py:232
 msgid "JPEG - Image"
 msgstr ""
 
@@ -892,7 +896,7 @@ msgid ""
 "Ctrl+G: go to a position   Ctrl+W: close"
 msgstr ""
 
-#: ui/preferences_dialog.py:126
+#: ui/preferences_dialog.py:129
 msgid "Language"
 msgstr ""
 
@@ -904,7 +908,7 @@ msgstr ""
 msgid "Loaded file: {value}"
 msgstr ""
 
-#: core/formatting.py:244 core/formatting.py:561 core/formatting.py:562
+#: core/formatting.py:248 core/formatting.py:568 core/formatting.py:569
 #: ui/settings_dialog.py:797
 msgid "Lossless"
 msgstr ""
@@ -925,31 +929,31 @@ msgstr ""
 msgid "Lyrics"
 msgstr ""
 
-#: core/formatting.py:260
+#: core/formatting.py:264
 msgid "M4B - Audio (Extract)"
 msgstr ""
 
-#: core/formatting.py:272
+#: core/formatting.py:276
 msgid "M4B - Audiobook (Chapters)"
 msgstr ""
 
-#: core/formatting.py:279
+#: core/formatting.py:283
 msgid "MKV - Video"
 msgstr ""
 
-#: core/formatting.py:291
+#: core/formatting.py:295
 msgid "MP3"
 msgstr ""
 
-#: core/formatting.py:270
+#: core/formatting.py:274
 msgid "MP3 - Audio"
 msgstr ""
 
-#: core/formatting.py:258
+#: core/formatting.py:262
 msgid "MP3 - Audio (Extract)"
 msgstr ""
 
-#: core/formatting.py:278
+#: core/formatting.py:282
 msgid "MP4 - Video (H.264)"
 msgstr ""
 
@@ -989,7 +993,7 @@ msgstr ""
 msgid "Merge with next segment (remove cut)"
 msgstr ""
 
-#: core/formatting.py:601 ui/settings_dialog.py:135
+#: core/formatting.py:608 ui/settings_dialog.py:135
 msgid "Mono"
 msgstr ""
 
@@ -1070,7 +1074,7 @@ msgstr ""
 msgid "Normalize for streaming (-16 LUFS)"
 msgstr ""
 
-#: core/formatting.py:538 core/formatting.py:549
+#: core/formatting.py:545 core/formatting.py:556
 msgid "Normalized -16 LUFS"
 msgstr ""
 
@@ -1086,11 +1090,11 @@ msgstr ""
 msgid "Nothing to undo"
 msgstr ""
 
-#: core/formatting.py:264
+#: core/formatting.py:268
 msgid "OGG - Audio (Extract)"
 msgstr ""
 
-#: core/formatting.py:276
+#: core/formatting.py:280
 msgid "OGG - Audio (Vorbis)"
 msgstr ""
 
@@ -1134,7 +1138,7 @@ msgstr ""
 msgid "Operating system: {value}"
 msgstr ""
 
-#: core/formatting.py:292
+#: core/formatting.py:296
 msgid "Opus"
 msgstr ""
 
@@ -1142,7 +1146,7 @@ msgstr ""
 msgid "Original"
 msgstr ""
 
-#: core/formatting.py:602 ui/settings_dialog.py:135
+#: core/formatting.py:609 ui/settings_dialog.py:135
 msgid "Original Channels"
 msgstr ""
 
@@ -1154,7 +1158,7 @@ msgstr ""
 msgid "Output format for the export:"
 msgstr ""
 
-#: core/formatting.py:229
+#: core/formatting.py:233
 msgid "PNG - Image (Lossless)"
 msgstr ""
 
@@ -1310,7 +1314,7 @@ msgstr ""
 msgid "Quality scale used in VBR mode."
 msgstr ""
 
-#: core/formatting.py:239 core/formatting.py:245
+#: core/formatting.py:243 core/formatting.py:249
 msgid "Quality {q}"
 msgstr ""
 
@@ -1374,7 +1378,7 @@ msgstr ""
 msgid "Sample Rate:"
 msgstr ""
 
-#: ui/host.py:229
+#: ui/host.py:232
 msgid "Save cut file"
 msgstr ""
 
@@ -1414,7 +1418,7 @@ msgstr ""
 msgid "Segments: {value}"
 msgstr ""
 
-#: ui/host.py:268
+#: ui/host.py:271
 msgid "Select output folder for the pieces"
 msgstr ""
 
@@ -1454,7 +1458,7 @@ msgstr ""
 msgid "Source"
 msgstr ""
 
-#: ui/preferences_dialog.py:117
+#: ui/preferences_dialog.py:120
 msgid "Speech"
 msgstr ""
 
@@ -1482,7 +1486,7 @@ msgstr ""
 msgid "Step: {step}   |   Kept regions: {kept}"
 msgstr ""
 
-#: core/formatting.py:599
+#: core/formatting.py:606
 msgid "Stereo"
 msgstr ""
 
@@ -1522,7 +1526,7 @@ msgstr ""
 msgid "Synopsis"
 msgstr ""
 
-#: core/formatting.py:231
+#: core/formatting.py:235
 msgid "TIFF - Image (Lossless)"
 msgstr ""
 
@@ -1558,7 +1562,7 @@ msgstr ""
 msgid "The GitHub release does not define a valid version tag."
 msgstr ""
 
-#: core/conversion.py:678
+#: core/conversion.py:732
 msgid ""
 "The converted file is unexpectedly short — the conversion likely failed."
 msgstr ""
@@ -1700,7 +1704,7 @@ msgstr ""
 msgid "Unable to start the update installer."
 msgstr ""
 
-#: core/formatting.py:249
+#: core/formatting.py:253
 msgid "Uncompressed"
 msgstr ""
 
@@ -1756,7 +1760,7 @@ msgstr ""
 msgid "User email: {value}"
 msgstr ""
 
-#: core/formatting.py:578
+#: core/formatting.py:585
 msgid "VBR Q{quality}"
 msgstr ""
 
@@ -1808,27 +1812,27 @@ msgstr ""
 msgid "Video settings panel"
 msgstr ""
 
-#: core/formatting.py:526
+#: core/formatting.py:533
 msgid "Video: Copy"
 msgstr ""
 
-#: core/formatting.py:261
+#: core/formatting.py:265
 msgid "WAV - Audio (Extract)"
 msgstr ""
 
-#: core/formatting.py:273
+#: core/formatting.py:277
 msgid "WAV - Audio (Lossless)"
 msgstr ""
 
-#: core/formatting.py:265
+#: core/formatting.py:269
 msgid "WMA - Audio (Extract)"
 msgstr ""
 
-#: core/formatting.py:277
+#: core/formatting.py:281
 msgid "WMA - Audio (Legacy)"
 msgstr ""
 
-#: core/formatting.py:230
+#: core/formatting.py:234
 msgid "WebP - Image"
 msgstr ""
 

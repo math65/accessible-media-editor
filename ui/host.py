@@ -208,6 +208,9 @@ class EditorHost:
         settings['ffmpeg_threads'] = self.settings_store.get('ffmpeg_threads', 'auto')
         settings['preserve_metadata'] = self.settings_store.get('preserve_metadata', False)
         settings['m4b_chapter_naming'] = self.settings_store.get('m4b_chapter_naming', 'title_or_number')
+        # Préférence globale « copie exacte » injectée dans le dict par-export → visible
+        # côté SegmentExportTask (1 fichier) comme côté batch (N fichiers).
+        settings['cutter_smart_cut'] = self.settings_store.get('cutter_smart_cut', False)
         return fmt_key, settings
 
     # ------------------------------------------------------------------ export

@@ -161,6 +161,7 @@ class ConversionTask:
         self.ffmpeg_exe = get_ffmpeg_path()
         self.ffprobe_exe = get_ffprobe_path()
         self.process = None
+        self._smart_cutter = None  # SmartCutter courant (coupe image-exacte) pour l'annulation
         self.last_command = []
         self.stderr_lines = []
 
@@ -419,12 +420,59 @@ class ConversionTask:
         logging.info("Conversion image terminée avec succès.")
 
     def stop(self):
+        cutter = self._smart_cutter
+        if cutter is not None:
+            cutter.stop()
         if self.process and self.process.poll() is None:
             try:
                 self.process.kill()
                 logging.info("Processus FFmpeg interrompu pour: %s", self.input_path)
             except Exception:
                 logging.exception("Impossible d'interrompre FFmpeg pour: %s", self.input_path)
+
+    def _should_smart_cut(self):
+        """Vrai si ce job est un segment vidéo à couper en mode copie avec la coupe
+        image-exacte (smart cut) activée dans les préférences. Sinon chemin normal."""
+        if not self.clip or self.meta is None:
+            return False
+        if not self.settings.get('cutter_smart_cut'):
+            return False
+        if self.target_format not in VIDEO_CONTAINER_OUTPUTS or not getattr(self.meta, 'has_video', False):
+            return False
+        # N'a de sens qu'en mode copie (le réencodage complet est déjà image-exact).
+        return (self.settings.get('video_mode', 'convert') == 'copy'
+                and self.settings.get('audio_mode', 'convert') == 'copy')
+
+    def _try_smart_cut(self, output_path, progress_callback, stop_check_callback):
+        """Coupe la région en image-exact via SmartCutter. Retourne True si fait,
+        False si inapplicable (région dans un seul GOP, codec non géré, échec non
+        fatal…) → l'appelant poursuit alors la copie normale (calée keyframe)."""
+        from core.smart_cut import SmartCutter, SmartCutNotApplicable
+
+        if stop_check_callback and stop_check_callback():
+            raise Exception("Stopped by user")
+        clip_start_ms, clip_end_ms = self.clip
+        self._smart_cutter = SmartCutter(threads=parse_ffmpeg_threads(self.settings))
+        if progress_callback:
+            progress_callback(0)
+        try:
+            self._smart_cutter.cut_region(self.input_path, clip_start_ms, clip_end_ms, output_path)
+        except SmartCutNotApplicable as exc:
+            logging.info("Smart cut inapplicable pour %s (%s) → copie normale.",
+                         os.path.basename(self.input_path), exc)
+            return False
+        except Exception as exc:
+            if (stop_check_callback and stop_check_callback()) or 'Stopped by user' in str(exc):
+                raise
+            logging.warning("Smart cut a échoué pour %s → repli sur copie normale : %s",
+                            os.path.basename(self.input_path), exc)
+            return False
+        finally:
+            self._smart_cutter = None
+        if progress_callback:
+            progress_callback(100)
+        logging.info("Coupe image-exacte (smart cut) réussie : %s", os.path.basename(output_path))
+        return True
 
     def _probe_duration(self, path):
         """Renvoie la durée (secondes) d'un fichier via ffprobe, ou None si illisible."""
@@ -482,6 +530,12 @@ class ConversionTask:
         # exist_ok : plusieurs pistes d'un même cue créent le sous-dossier album en
         # parallèle (sinon WinError 183 sur le perdant de la course).
         os.makedirs(output_dir, exist_ok=True)
+
+        # Coupe « copie exacte » (smart cut) : segment vidéo en mode copie avec l'option
+        # activée → réencode seulement les bords, sinon on continue en copie normale.
+        if self._should_smart_cut() and self._try_smart_cut(
+                output_path, progress_callback, stop_check_callback):
+            return
 
         if self.target_format in IMAGE_OUTPUT_FORMAT_KEYS:
             return self._run_image_conversion(output_path)

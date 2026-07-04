@@ -274,7 +274,7 @@ class BatchConversionManager:
         override = getattr(meta, 'output_override', None)
         if isinstance(override, dict) and override.get('format'):
             job_settings = dict(override.get('settings') or {})
-            for global_key in ('ffmpeg_threads', 'preserve_metadata'):
+            for global_key in ('ffmpeg_threads', 'preserve_metadata', 'cutter_smart_cut'):
                 if global_key in self.settings:
                     job_settings.setdefault(global_key, self.settings[global_key])
             return override['format'], job_settings
