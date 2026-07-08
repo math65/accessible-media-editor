@@ -140,7 +140,7 @@ def parse_timecode(text, fps=None):
 
 class SegmentEditorFrame(wx.Frame):
     def __init__(self, parent, meta, on_export, on_choose_settings=None, settings_store=None,
-                 on_open_file=None, on_persist=None):
+                 on_open_file=None, on_persist=None, on_closed=None):
         title = _("Accessible Media Editor — {name}").format(name=os.path.basename(meta.full_path))
         super().__init__(parent, title=title, size=(720, 520),
                          style=wx.DEFAULT_FRAME_STYLE)
@@ -152,6 +152,8 @@ class SegmentEditorFrame(wx.Frame):
         # préférences (l'app d'origine passait par le parent ; ici parent = None).
         self.on_open_file = on_open_file
         self.on_persist = on_persist
+        # Prévenu quand cette fenêtre se ferme (le host réaffiche alors l'accueil).
+        self.on_closed = on_closed
         self._settings = settings_store if isinstance(settings_store, dict) else {}
         self.duration_ms = int(round(float(getattr(meta, 'duration', 0) or 0) * 1000))
         # Cadence vidéo : permet la saisie de timecode image 'HH:MM:SS:FF' (0 = inconnu).
@@ -1235,6 +1237,10 @@ class SegmentEditorFrame(wx.Frame):
 
         self._closed = True
         self.player.shutdown()  # ferme le flux + termine le thread moteur
+        # Prévenir le host AVANT Destroy (appel synchrone) pour qu'il réaffiche
+        # l'accueil — sauf remplacement par un autre fichier (le host l'ignore alors).
+        if callable(self.on_closed):
+            self.on_closed()
         self.Destroy()
 
     # ------------------------------------------------------------------ clavier

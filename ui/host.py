@@ -93,6 +93,8 @@ class EditorHost:
             pass
         self.prober = FileProber()
         self.editor = None
+        self.welcome = None      # écran d'accueil « aucun fichier » (fenêtre racine)
+        self._replacing = False  # True pendant le remplacement de l'éditeur (ne pas ré-accueillir)
 
     # -------------------------------------------------------------- persistence
     def _save_config(self):
@@ -101,15 +103,72 @@ class EditorHost:
         except Exception:  # noqa: BLE001
             pass
 
+    # ---------------------------------------------------------- welcome screen
+    def show_welcome(self):
+        """Affiche (ou crée) l'écran d'accueil « aucun fichier ». C'est la fenêtre
+        racine qui maintient la boucle wx en vie quand aucun éditeur n'est ouvert."""
+        from ui.welcome_frame import WelcomeFrame
+        if self.welcome is None:
+            self.welcome = WelcomeFrame(on_open=self.open_file, on_paste=self.paste_open)
+        self.welcome.Show()
+        self.welcome.Raise()
+        wx.CallAfter(self.welcome.btn_open.SetFocus)
+        return self.welcome
+
+    def _on_editor_closed(self):
+        """Appelé quand l'éditeur se ferme. On revient à l'accueil, sauf si c'est un
+        remplacement par un autre fichier (load_path gère alors l'éditeur lui-même)."""
+        if self._replacing:
+            return
+        self.editor = None
+        self.show_welcome()
+
+    def paste_open(self):
+        """Ctrl+V depuis l'accueil : ouvre le fichier copié dans l'Explorateur, ou le
+        chemin présent dans le presse-papier."""
+        path = self._clipboard_path()
+        if not path:
+            wx.MessageBox(_("The clipboard does not contain a file or a valid path."),
+                          _("Paste"), wx.ICON_INFORMATION)
+            return False
+        if not os.path.isfile(path):
+            wx.MessageBox(
+                _("This path does not point to an existing file:\n{path}").format(path=path),
+                _("Paste"), wx.ICON_WARNING)
+            return False
+        return self.load_path(path)
+
+    @staticmethod
+    def _clipboard_path():
+        """Chemin de fichier depuis le presse-papier : un fichier copié (CF_HDROP de
+        l'Explorateur) en priorité, sinon un chemin en texte. None si rien d'exploitable."""
+        if not wx.TheClipboard.Open():
+            return None
+        try:
+            files = wx.FileDataObject()
+            if wx.TheClipboard.GetData(files):
+                names = files.GetFilenames()
+                if names:
+                    return names[0]
+            text = wx.TextDataObject()
+            if wx.TheClipboard.GetData(text):
+                value = (text.GetText() or "").strip().strip('"')
+                if value:
+                    return value
+        finally:
+            wx.TheClipboard.Close()
+        return None
+
     # ------------------------------------------------------------- open a file
     def open_file(self):
-        """Menu « Ouvrir un fichier… » (et sélection initiale au démarrage)."""
+        """Menu « Ouvrir un fichier… » (depuis l'accueil ou l'éditeur)."""
         wildcard = (
             _("Media files") + f" ({_MEDIA_WILDCARD})|{_MEDIA_WILDCARD}|"
             + _("Cut project (*.amccut)") + "|*.amccut|"
             + _("All files") + " (*.*)|*.*"
         )
-        with wx.FileDialog(self.editor, _("Open a media file"), wildcard=wildcard,
+        parent = self.editor or self.welcome
+        with wx.FileDialog(parent, _("Open a media file"), wildcard=wildcard,
                            style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as dlg:
             if dlg.ShowModal() != wx.ID_OK:
                 return False
@@ -132,9 +191,14 @@ class EditorHost:
             return False
 
         # Remplacer l'éditeur courant : Close() déclenche la garde « non enregistré ».
+        # _replacing empêche _on_editor_closed de rebasculer vers l'accueil entre-temps.
         if self.editor is not None:
-            if not self.editor.Close():
-                return False  # l'utilisateur a annulé (découpes non enregistrées)
+            self._replacing = True
+            try:
+                if not self.editor.Close():
+                    return False  # l'utilisateur a annulé (découpes non enregistrées)
+            finally:
+                self._replacing = False
             self.editor = None
 
         self.editor = SegmentEditorFrame(
@@ -143,7 +207,11 @@ class EditorHost:
             settings_store=self.settings_store,
             on_open_file=self.open_file,
             on_persist=self._save_config,
+            on_closed=self._on_editor_closed,
         )
+        # L'accueil laisse la place à l'éditeur (il sera réaffiché à la fermeture).
+        if self.welcome is not None:
+            self.welcome.Hide()
         return True
 
     def load_project(self, project_path):
@@ -235,6 +303,11 @@ class EditorHost:
             if dlg.ShowModal() == wx.ID_CANCEL:
                 return False
             output_path = dlg.GetPath()
+
+        # Forcer la bonne extension si l'utilisateur l'a retirée (ex. « test ») : sans
+        # elle, FFmpeg ne peut pas déduire le conteneur et l'export échoue.
+        if os.path.splitext(output_path)[1].lower() != f".{ext}".lower():
+            output_path += f".{ext}"
 
         task = SegmentExportTask(meta, regions, fmt_key, settings, output_path)
         stop_flag = {'v': False}
