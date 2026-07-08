@@ -5,8 +5,8 @@ APP_INSTALLER_BASENAME = "AccessibleMediaEditor-Setup"
 APP_INSTALLER_FILENAME = f"{APP_INSTALLER_BASENAME}.exe"
 # Version 0.x : projet autonome amorcé à partir du découpeur d'Accessible Media
 # Converter (le noyau : modèle de segments + moteur audio PortAudio + export).
-APP_VERSION = "0.1.0"
-APP_VERSION_WIN = "0.1.0.0"
+APP_VERSION = "0.2.0"
+APP_VERSION_WIN = "0.2.0.0"
 APP_INSTALL_DIRNAME = "Accessible Media Editor"
 APP_PUBLISHER = "Accessible Media Editor"
 APP_ID = "{8EF4AA32-F74A-45FD-85C6-1E6DDC6D42AE}"

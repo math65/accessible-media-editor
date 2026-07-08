@@ -72,17 +72,49 @@ class SegmentExportTask:
         self.output_path = output_path
         self.ffmpeg_exe = get_ffmpeg_path()
         self.process = None
+        self._smart_cutter = None  # SmartCutter courant (coupe image-exacte) pour l'annulation
         self.stderr_lines = []
         self.last_command = []
         self.total_kept_ms = sum(max(0, end - start) for start, end in self.regions)
 
     def stop(self):
+        cutter = self._smart_cutter
+        if cutter is not None:
+            cutter.stop()
         if self.process and self.process.poll() is None:
             try:
                 self.process.kill()
                 logging.info("Processus FFmpeg de découpage interrompu.")
             except Exception:
                 logging.exception("Impossible d'interrompre FFmpeg (découpage).")
+
+    def _smart_cut_enabled(self):
+        return bool(self.settings.get('cutter_smart_cut')) and self._is_video_output()
+
+    def _extract_region_smart(self, start_ms, end_ms, seg_path, stop_check_callback):
+        """Extrait une région gardée en image-exact (smart cut) vers seg_path. Retourne
+        True si fait, False si inapplicable/échec non fatal → l'appelant retombe sur
+        l'extraction copie normale (calée keyframe)."""
+        from core.smart_cut import SmartCutter, SmartCutNotApplicable
+
+        if stop_check_callback and stop_check_callback():
+            raise Exception("Stopped by user")
+        self._smart_cutter = SmartCutter(threads=parse_ffmpeg_threads(self.settings))
+        try:
+            self._smart_cutter.cut_region(self.input_path, start_ms, end_ms, seg_path)
+        except SmartCutNotApplicable as exc:
+            logging.info("Smart cut inapplicable sur la région %d-%d ms (%s) → copie normale.",
+                         start_ms, end_ms, exc)
+            return False
+        except Exception as exc:
+            if (stop_check_callback and stop_check_callback()) or 'Stopped by user' in str(exc):
+                raise
+            logging.warning("Smart cut région %d-%d ms échoué → copie normale : %s",
+                            start_ms, end_ms, exc)
+            return False
+        finally:
+            self._smart_cutter = None
+        return True
 
     def _is_video_output(self):
         return self.target_format in VIDEO_CONTAINER_OUTPUTS and getattr(self.meta, 'has_video', False)
@@ -173,6 +205,16 @@ class SegmentExportTask:
                 seg_fd, seg_path = tempfile.mkstemp(suffix=source_ext, prefix='amc_cut_')
                 os.close(seg_fd)
                 temp_segments.append(seg_path)
+
+                # Coupe image-exacte (smart cut) si activée ; sinon (ou en repli)
+                # extraction copie normale calée sur la keyframe.
+                if self._smart_cut_enabled() and self._extract_region_smart(
+                        start_ms, end_ms, seg_path, stop_check_callback):
+                    accumulated_ms += (end_ms - start_ms)
+                    if progress_callback and self.total_kept_ms > 0:
+                        pct = int(min(95, accumulated_ms / self.total_kept_ms * 95))
+                        progress_callback(pct)
+                    continue
 
                 cmd = [self.ffmpeg_exe, '-y']
                 if is_transport_stream(self.input_path):

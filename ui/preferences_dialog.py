@@ -109,8 +109,11 @@ class PreferencesDialog(wx.Dialog):
 
         self.cb_continue = wx.CheckBox(parent, label=_("Continue despite errors"))
         self.cb_open_folder = wx.CheckBox(parent, label=_("Open the output folder after export"))
+        self.cb_smart_cut = wx.CheckBox(
+            parent, label=_("Frame-exact cuts in copy mode (re-encodes cut boundaries, slower)"))
         box.Add(self.cb_continue, 0, wx.LEFT | wx.RIGHT | wx.TOP, 6)
-        box.Add(self.cb_open_folder, 0, wx.ALL, 6)
+        box.Add(self.cb_open_folder, 0, wx.LEFT | wx.RIGHT | wx.TOP, 6)
+        box.Add(self.cb_smart_cut, 0, wx.ALL, 6)
         return box
 
     def _build_speech_box(self, panel):
@@ -146,6 +149,7 @@ class PreferencesDialog(wx.Dialog):
         self.cb_prereleases.SetValue(bool(s.get("include_prereleases", False)))
         self.cb_continue.SetValue(bool(s.get("continue_on_error", True)))
         self.cb_open_folder.SetValue(bool(s.get("open_output_folder_after_batch", False)))
+        self.cb_smart_cut.SetValue(bool(s.get("cutter_smart_cut", False)))
         self.cb_ann_transport.SetValue(bool(s.get("cutter_announce_transport", True)))
         self.cb_ann_position.SetValue(bool(s.get("cutter_announce_position", True)))
 
@@ -172,6 +176,7 @@ class PreferencesDialog(wx.Dialog):
         s["ffmpeg_threads"] = self._thread_values[self.choice_threads.GetSelection()]
         s["continue_on_error"] = self.cb_continue.GetValue()
         s["open_output_folder_after_batch"] = self.cb_open_folder.GetValue()
+        s["cutter_smart_cut"] = self.cb_smart_cut.GetValue()
         s["cutter_announce_transport"] = self.cb_ann_transport.GetValue()
         s["cutter_announce_position"] = self.cb_ann_position.GetValue()
         s["ui_language"] = self._lang_codes[self.choice_lang.GetSelection()]

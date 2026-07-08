@@ -56,15 +56,13 @@ def main():
         from ui.host import EditorHost
         host = EditorHost()
 
+        # Ouverture directe si un fichier est passé (verbe « Éditer avec… » / ligne de
+        # commande) ; sinon on démarre sur l'écran d'accueil « aucun fichier » (Ctrl+O
+        # ou Ctrl+V pour ouvrir). L'accueil maintient la boucle wx en vie.
         cli_paths = [path for path in sys.argv[1:] if os.path.exists(path)]
-        if cli_paths:
-            opened = host.load_path(cli_paths[0])
-        else:
-            opened = host.open_file()
-
-        if not opened or host.editor is None:
-            logging.info("Aucun fichier ouvert, sortie.")
-            return
+        opened = host.load_path(cli_paths[0]) if cli_paths else False
+        if not opened:
+            host.show_welcome()
 
         app.MainLoop()
 
